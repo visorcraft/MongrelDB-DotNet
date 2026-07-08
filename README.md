@@ -1,13 +1,21 @@
-# MongrelDB .NET Client
+<p align="center">
+  <img src="assets/mongrel.png" alt="MongrelDB logo" width="250" />
+</p>
 
-MongrelDB .NET Client is the pure managed C# HTTP client for [MongrelDB](https://www.MongrelDB.com). It gives .NET applications a typed CRUD surface, a fluent query builder that pushes conditions down to MongrelDB's native indexes, idempotent batch transactions, full SQL access, and schema introspection - all over HTTP to a running `mongreldb-server` daemon.
+<h1 align="center">MongrelDB .NET Client</h1>
 
-No external dependencies - built on the standard library `System.Net.Http.HttpClient` and `System.Text.Json` (.NET 8+). The API mirrors the MongrelDB PHP, Go, and Java clients.
+<p align="center">
+  <b>C#/.NET client for MongrelDB - embedded+server database with SQL, vector search, full-text search, and AI-native retrieval.</b>
+  <br />
+  No external dependencies - built on the standard library <code>System.Net.Http.HttpClient</code> and <code>System.Text.Json</code> (.NET 8+). The API mirrors the MongrelDB PHP, Go, and Java clients.
+</p>
 
-[![.NET CI](https://github.com/visorcraft/MongrelDB-DotNet/actions/workflows/ci.yml/badge.svg)](https://github.com/visorcraft/MongrelDB-DotNet/actions/workflows/ci.yml)
-[![NuGet](https://img.shields.io/nuget/v/Visorcraft.MongrelDB.svg?label=NuGet)](https://www.nuget.org/packages/Visorcraft.MongrelDB)
-[![.NET](https://img.shields.io/badge/.NET-8.0%2B-512BD4.svg)](https://dotnet.microsoft.com/)
-[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
+<p align="center">
+  <a href="https://github.com/visorcraft/MongrelDB-DotNet/actions/workflows/ci.yml"><img src="https://github.com/visorcraft/MongrelDB-DotNet/actions/workflows/ci.yml/badge.svg" alt=".NET CI" /></a>
+  <a href="https://www.nuget.org/packages/Visorcraft.MongrelDB"><img src="https://img.shields.io/nuget/v/Visorcraft.MongrelDB.svg?label=NuGet" alt="NuGet" /></a>
+  <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-8.0%2B-512BD4.svg" alt=".NET" /></a>
+  <a href="#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg" alt="License" /></a>
+</p>
 
 ## Package
 
