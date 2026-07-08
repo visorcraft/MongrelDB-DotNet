@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Package identity -->
+    <PackageId>Visorcraft.MongrelDB</PackageId>
+    <Title>MongrelDB .NET Client</Title>
+    <Description>Pure C# HTTP client for MongrelDB. Typed CRUD, a fluent query builder that pushes conditions down to the engine's native indexes, idempotent batch transactions, full SQL access, and schema introspection — all over System.Net.Http.HttpClient to a running mongreldb-server daemon. No external dependencies.</Description>
+    <Authors>Visorcraft</Authors>
+    <Owners>Visorcraft</Owners>
+    <Copyright>Copyright (c) 2026 Visorcraft</Copyright>
+
+    <!-- Licensing (SPDX expression; a LICENSE file is still packed for human readers) -->
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+
+    <!-- Metadata -->
+    <PackageProjectUrl>https://github.com/visorcraft/MongrelDB-DotNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/visorcraft/MongrelDB-DotNet.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>mongreldb;database;client;http;storage;visorcraft;dotnet</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Build/output -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <!-- No external NuGet dependencies: this library targets only the
+       System.Net.Http / System.Text.Json / System.Text.RegularExpressions
+       surface that ships in the net8.0 base class library. -->
+
+  <!-- The test project lives under tests/ but this SDK-style project globs
+       **/*.cs by default; exclude the test sources so they are not compiled
+       into the library (they belong to tests/MongrelDB.Tests instead). -->
+  <ItemGroup>
+    <Compile Remove="tests/**/*" />
+    <None Remove="tests/**/*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

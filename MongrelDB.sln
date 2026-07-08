@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongrelDB", "MongrelDB.csproj", "{87C9E33F-9B8F-4EA7-873A-45AA73B9E492}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{AD9C21ED-EF8B-4435-9173-CB7BD8CC2312}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongrelDB.Tests", "tests\MongrelDB.Tests\MongrelDB.Tests.csproj", "{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{87C9E33F-9B8F-4EA7-873A-45AA73B9E492}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87C9E33F-9B8F-4EA7-873A-45AA73B9E492}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87C9E33F-9B8F-4EA7-873A-45AA73B9E492}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87C9E33F-9B8F-4EA7-873A-45AA73B9E492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD} = {AD9C21ED-EF8B-4435-9173-CB7BD8CC2312}
+	EndGlobalSection
+EndGlobal
