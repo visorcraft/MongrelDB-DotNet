@@ -1,0 +1,26 @@
+# Build output
+bin/
+obj/
+
+# Agent / assistant instruction files are workspace-local, never published
+AGENTS.md
+CLAUDE.md
+.cursorrules
+.zcode/
+
+# Logs
+*.log
+
+# OS and editor state
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
