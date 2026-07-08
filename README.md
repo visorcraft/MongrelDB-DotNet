@@ -9,23 +9,11 @@ No external dependencies — built on the standard library `System.Net.Http.Http
 [![.NET](https://img.shields.io/badge/.NET-8.0%2B-512BD4.svg)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 
-## Requirements
+## Package
 
-- **.NET 8.0 or newer**
-- A running [`mongreldb-server`](https://github.com/visorcraft/MongrelDB) daemon
-
-## What It Provides
-
-- **Typed CRUD** over the Kit transaction endpoint: `PutAsync`, `UpsertAsync` (insert-or-update on PK conflict), `DeleteAsync` by row id or `DeleteByPkAsync` by primary key, all with optional idempotency keys for safe retries.
-- **Fluent query builder** that pushes conditions down to the engine's specialized indexes for sub-millisecond lookups: bitmap equality/IN, learned-range, null checks, FM-index full-text search, HNSW vector similarity (`ann`), and sparse vector match. Friendly aliases (`column` → `column_id`, `min`/`max` → `lo`/`hi`) are translated to the server's on-wire keys.
-- **Idempotent batch transactions** — operations staged locally and committed atomically, with the engine enforcing unique, foreign-key, and check constraints at commit time. Idempotency keys return the original response on duplicate commits, even after a crash.
-- **Full SQL access** through the DataFusion-backed `/sql` endpoint: recursive CTEs, window functions, `CREATE TABLE AS SELECT`, materialized views, and multi-statement execution.
-- **Schema management**: typed table creation, full schema catalog, and per-table descriptors.
-- **Maintenance**: compaction (all tables or per-table).
-- **Pluggable transport**: bring your own `HttpClient`. Bearer token and HTTP Basic auth are first-class options.
-- **Typed errors**: `AuthException` (401/403), `NotFoundException` (404), `ConflictException` (409, with error code + op index), and `QueryException` (everything else), all extending `MongrelDBException` and carrying the status code and decoded server envelope.
-
-## Install
+| Surface | Package | Install |
+|---|---|---|
+| .NET client | `Visorcraft.MongrelDB` | `dotnet add package Visorcraft.MongrelDB` |
 
 ### .NET CLI
 
@@ -47,7 +35,35 @@ Install-Package Visorcraft.MongrelDB
 
 The package has no runtime dependencies — only the .NET base class library.
 
-## Quick start
+## Requirements
+
+- **.NET 8.0 or newer**
+- A running [`mongreldb-server`](https://github.com/visorcraft/MongrelDB) daemon
+
+## What It Provides
+
+- **Typed CRUD** over the Kit transaction endpoint: `PutAsync`, `UpsertAsync` (insert-or-update on PK conflict), `DeleteAsync` by row id or `DeleteByPkAsync` by primary key, all with optional idempotency keys for safe retries.
+- **Fluent query builder** that pushes conditions down to the engine's specialized indexes for sub-millisecond lookups: bitmap equality/IN, learned-range, null checks, FM-index full-text search, HNSW vector similarity (`ann`), and sparse vector match. Friendly aliases (`column` → `column_id`, `min`/`max` → `lo`/`hi`) are translated to the server's on-wire keys.
+- **Idempotent batch transactions** — operations staged locally and committed atomically, with the engine enforcing unique, foreign-key, and check constraints at commit time. Idempotency keys return the original response on duplicate commits, even after a crash.
+- **Full SQL access** through the DataFusion-backed `/sql` endpoint: recursive CTEs, window functions, `CREATE TABLE AS SELECT`, materialized views, and multi-statement execution.
+- **Schema management**: typed table creation, full schema catalog, and per-table descriptors.
+- **User/role/credentials management** via SQL: Argon2id-hashed catalog users, roles, and `GRANT`/`REVOKE` table-level permissions, all executed through `SqlAsync`.
+- **Maintenance**: compaction (all tables or per-table).
+- **Pluggable transport**: bring your own `HttpClient`. Bearer token and HTTP Basic auth are first-class options.
+- **Typed errors**: `AuthException` (401/403), `NotFoundException` (404), `ConflictException` (409, with error code + op index), and `QueryException` (everything else), all extending `MongrelDBException` and carrying the status code and decoded server envelope.
+
+## Examples
+
+Task-focused, commented guides live in [`docs/`](docs):
+
+- [Quickstart](docs/quickstart.md) — install, start the daemon, write and run a complete program.
+- [Transactions](docs/transactions.md) — batch commits, idempotency keys, constraint handling.
+- [Queries](docs/queries.md) — every native condition type and the index it pushes down to.
+- [SQL](docs/sql.md) — recursive CTEs, window functions, advanced SQL.
+- [Authentication](docs/auth.md) — Bearer token, HTTP Basic, and open modes.
+- [Errors](docs/errors.md) — the exception hierarchy and recovery patterns.
+
+## Quick Example
 
 ```csharp
 using Visorcraft.MongrelDB;
@@ -201,6 +217,23 @@ await db.SqlAsync("SELECT id, ROW_NUMBER() OVER (PARTITION BY customer ORDER BY 
 The `/sql` endpoint generally streams Arrow IPC bytes for `SELECT`s; `SqlAsync()`
 decodes JSON row sets when the daemon returns them and returns an empty list
 otherwise (DDL/DML or binary bodies).
+
+## User & role management
+
+User, role, and permission management is performed through SQL against the
+daemon's catalog. Passwords are Argon2id-hashed server-side.
+
+```csharp
+await db.SqlAsync("CREATE USER admin WITH PASSWORD 's3cret-pw'");
+await db.SqlAsync("ALTER USER admin SET ADMIN TRUE");
+
+await db.SqlAsync("CREATE ROLE analyst");
+await db.SqlAsync("GRANT select ON orders TO analyst"); // table-level permission
+await db.SqlAsync("GRANT analyst TO alice");
+
+await db.SqlAsync("SELECT username FROM catalog.users"); // list users
+await db.SqlAsync("SELECT name FROM catalog.roles");     // list roles
+```
 
 ## Error handling
 
