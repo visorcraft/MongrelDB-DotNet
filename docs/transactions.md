@@ -1,8 +1,8 @@
 # Transactions
 
 MongrelDB commits every write through a single atomic transaction endpoint
-(`POST /kit/txn`). This guide covers the two ways to use it — a one-shot
-single op, and a staged batch — plus idempotency keys for safe retries, typed
+(`POST /kit/txn`). This guide covers the two ways to use it - a one-shot
+single op, and a staged batch - plus idempotency keys for safe retries, typed
 constraint-violation handling, and rollback.
 
 The engine enforces `UNIQUE`, foreign-key, check, and trigger constraints at
@@ -43,12 +43,12 @@ txn.Put("orders", Cells.Of(1, 10L, 2, "Dave", 3, 50.0), returning: false);
 txn.Put("orders", Cells.Of(1, 11L, 2, "Eve", 3, 75.0), returning: false);
 txn.DeleteByPk("orders", 2L);
 
-List<Dictionary<string, object?>> results = await txn.CommitAsync(); // atomic — all or nothing
+List<Dictionary<string, object?>> results = await txn.CommitAsync(); // atomic - all or nothing
 Console.WriteLine($"committed {results.Count} ops");
 ```
 
 The third argument to `Transaction.Put` is `returning`. Set it to `true` to
-have the daemon echo the written row back in the result map — useful for
+have the daemon echo the written row back in the result map - useful for
 reading server-assigned values.
 
 ```csharp
@@ -99,12 +99,12 @@ Rules for keys:
 
 - Any non-empty string works. Prefer content-derived, globally-unique values
   (e.g. `"charge:" + orderId`).
-- `null` (or the empty string) disables idempotency — a retry will commit
+- `null` (or the empty string) disables idempotency - a retry will commit
   again.
 - The key scopes the **entire batch**, not individual ops. Reuse the exact
   same ops and key together when retrying.
 
-A safe retry loop — build the transaction inside the loop so a failed attempt
+A safe retry loop - build the transaction inside the loop so a failed attempt
 can be retried cleanly:
 
 ```csharp
@@ -126,7 +126,7 @@ public async Task CommitWithRetryAsync(
         catch (OperationCanceledException) { throw; }
         catch (MongrelDBException)
         {
-            // QueryException / network — the idempotency key makes it safe to
+            // QueryException / network - the idempotency key makes it safe to
             // retry.
             if (attempt == 2) throw;
             await Task.Delay(TimeSpan.FromSeconds(1 << attempt), ct); // 1s, 2s, 4s

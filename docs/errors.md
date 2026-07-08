@@ -86,7 +86,7 @@ Structured codes you will commonly see in `Code`:
 
 ## Discriminating errors
 
-### By type — catch the specific subclass
+### By type - catch the specific subclass
 
 ```csharp
 try
@@ -122,7 +122,7 @@ catch (ConflictException e) when (e.Code == "UNIQUE_VIOLATION")
 }
 ```
 
-### By details — read the properties
+### By details - read the properties
 
 ```csharp
 try
@@ -150,7 +150,7 @@ catch (ConflictException e)
 
 ## Recovery patterns
 
-### Auth failure — do not retry blindly
+### Auth failure - do not retry blindly
 
 A retry will not fix bad credentials. Surface the error to the caller or
 operator.
@@ -167,7 +167,7 @@ catch (AuthException e)
 }
 ```
 
-### Not found — fall back, do not crash
+### Not found - fall back, do not crash
 
 For lookups by primary key, a 404 may be a normal "absent" result.
 
@@ -181,14 +181,14 @@ try
 }
 catch (NotFoundException)
 {
-    return new List<Dictionary<string, object?>>(); // table missing — treat as empty
+    return new List<Dictionary<string, object?>>(); // table missing - treat as empty
 }
 ```
 
 Note: a `pk` query against an existing table returns zero rows, not a 404;
 `NotFoundException` here means the table itself is missing.
 
-### Constraint conflict — report the offending op
+### Constraint conflict - report the offending op
 
 ```csharp
 try
@@ -206,9 +206,9 @@ catch (ConflictException e)
 }
 ```
 
-The engine already rolled back the whole batch — there is nothing to undo.
+The engine already rolled back the whole batch - there is nothing to undo.
 
-### Transient failure — retry with an idempotency key
+### Transient failure - retry with an idempotency key
 
 `QueryException` covers transport and 5xx failures. With an idempotency key,
 retrying a transaction is safe (see [transactions.md](transactions.md)).
@@ -226,7 +226,7 @@ public async Task RunAsync(Func<Transaction> build, string key, CancellationToke
     catch (OperationCanceledException) { throw; }
     catch (MongrelDBException)
     {
-        // QueryException / network — caller may retry with the same key.
+        // QueryException / network - caller may retry with the same key.
         throw;
     }
 }
@@ -240,14 +240,14 @@ called twice. Fix the control flow rather than catching it.
 
 ```csharp
 await txn.CommitAsync();
-await txn.CommitAsync(); // throws InvalidOperationException — logic bug
+await txn.CommitAsync(); // throws InvalidOperationException - logic bug
 ```
 
 ### Cancellation
 
 Every async method accepts a `CancellationToken`. Cancellation surfaces as
 `OperationCanceledException` / `TaskCanceledException`, **not** as a
-`MongrelDBException` — handle it separately when you need to.
+`MongrelDBException` - handle it separately when you need to.
 
 ```csharp
 try
@@ -256,7 +256,7 @@ try
 }
 catch (OperationCanceledException) when (ct.IsCancellationRequested)
 {
-    // expected — the caller cancelled
+    // expected - the caller cancelled
 }
 ```
 
@@ -286,5 +286,5 @@ catch (MongrelDBException e) { /* catch-all parent */ }
 
 ## Next steps
 
-- [transactions.md](transactions.md) — constraint handling and retries in context
-- [auth.md](auth.md) — credential management
+- [transactions.md](transactions.md) - constraint handling and retries in context
+- [auth.md](auth.md) - credential management

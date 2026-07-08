@@ -22,7 +22,7 @@ namespace Visorcraft.MongrelDB;
 /// txn.Put("orders", Cells.Of(1, 10L, 2, "Dave"), returning: false);
 /// txn.Put("orders", Cells.Of(1, 11L, 2, "Eve"), returning: false);
 /// txn.DeleteByPk("orders", 2L);
-/// var results = await txn.CommitAsync(); // atomic — all or nothing
+/// var results = await txn.CommitAsync(); // atomic - all or nothing
 /// </code>
 /// </remarks>
 public sealed class Transaction
@@ -141,7 +141,7 @@ public sealed class Transaction
     /// <summary>
     /// Sends all staged operations atomically and returns the per-operation
     /// results. <paramref name="idempotencyKey"/>, when non-null and non-empty,
-    /// makes the commit safe to retry — the daemon returns the original
+    /// makes the commit safe to retry - the daemon returns the original
     /// response on duplicate commits, even after a crash.
     /// </summary>
     /// <param name="idempotencyKey">An idempotency key, or null.</param>

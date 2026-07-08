@@ -89,7 +89,7 @@ if (!await db.HealthAsync())
 
 // 2. Create a table. Each column is a Dictionary with id, name, ty, and flags.
 //    The first column is the primary key. Column ids are stable on-wire
-//    identifiers — use them everywhere else.
+//    identifiers - use them everywhere else.
 long tableId = await db.CreateTableAsync("orders", new[]
 {
     Column(1, "id", "int64", primaryKey: true),
@@ -163,7 +163,7 @@ total rows: 2
 
 **Using the column name instead of the column id.** Every on-wire API uses
 the numeric `id` from `CreateTableAsync`, never the `name`. The query
-builder's `column` alias maps to the server's `column_id` — pass the `long`
+builder's `column` alias maps to the server's `column_id` - pass the `long`
 id, not the string name:
 
 ```csharp
@@ -209,8 +209,8 @@ you construct the client with a token or Basic credentials. See
 
 ## Next steps
 
-- [transactions.md](transactions.md) — atomic batches, idempotency, retries
-- [queries.md](queries.md) — every native index condition
-- [sql.md](sql.md) — recursive CTEs, window functions, `CREATE TABLE AS SELECT`
-- [auth.md](auth.md) — bearer tokens, basic auth, user/role management
-- [errors.md](errors.md) — the full exception hierarchy and recovery patterns
+- [transactions.md](transactions.md) - atomic batches, idempotency, retries
+- [queries.md](queries.md) - every native index condition
+- [sql.md](sql.md) - recursive CTEs, window functions, `CREATE TABLE AS SELECT`
+- [auth.md](auth.md) - bearer tokens, basic auth, user/role management
+- [errors.md](errors.md) - the full exception hierarchy and recovery patterns

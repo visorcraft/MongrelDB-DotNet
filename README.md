@@ -1,8 +1,8 @@
 # MongrelDB .NET Client
 
-MongrelDB .NET Client is the pure managed C# HTTP client for [MongrelDB](https://www.MongrelDB.com). It gives .NET applications a typed CRUD surface, a fluent query builder that pushes conditions down to MongrelDB's native indexes, idempotent batch transactions, full SQL access, and schema introspection — all over HTTP to a running `mongreldb-server` daemon.
+MongrelDB .NET Client is the pure managed C# HTTP client for [MongrelDB](https://www.MongrelDB.com). It gives .NET applications a typed CRUD surface, a fluent query builder that pushes conditions down to MongrelDB's native indexes, idempotent batch transactions, full SQL access, and schema introspection - all over HTTP to a running `mongreldb-server` daemon.
 
-No external dependencies — built on the standard library `System.Net.Http.HttpClient` and `System.Text.Json` (.NET 8+). The API mirrors the MongrelDB PHP, Go, and Java clients.
+No external dependencies - built on the standard library `System.Net.Http.HttpClient` and `System.Text.Json` (.NET 8+). The API mirrors the MongrelDB PHP, Go, and Java clients.
 
 [![.NET CI](https://github.com/visorcraft/MongrelDB-DotNet/actions/workflows/ci.yml/badge.svg)](https://github.com/visorcraft/MongrelDB-DotNet/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/v/Visorcraft.MongrelDB.svg?label=NuGet)](https://www.nuget.org/packages/Visorcraft.MongrelDB)
@@ -33,7 +33,7 @@ dotnet add package Visorcraft.MongrelDB
 Install-Package Visorcraft.MongrelDB
 ```
 
-The package has no runtime dependencies — only the .NET base class library.
+The package has no runtime dependencies - only the .NET base class library.
 
 ## Requirements
 
@@ -44,7 +44,7 @@ The package has no runtime dependencies — only the .NET base class library.
 
 - **Typed CRUD** over the Kit transaction endpoint: `PutAsync`, `UpsertAsync` (insert-or-update on PK conflict), `DeleteAsync` by row id or `DeleteByPkAsync` by primary key, all with optional idempotency keys for safe retries.
 - **Fluent query builder** that pushes conditions down to the engine's specialized indexes for sub-millisecond lookups: bitmap equality/IN, learned-range, null checks, FM-index full-text search, HNSW vector similarity (`ann`), and sparse vector match. Friendly aliases (`column` → `column_id`, `min`/`max` → `lo`/`hi`) are translated to the server's on-wire keys.
-- **Idempotent batch transactions** — operations staged locally and committed atomically, with the engine enforcing unique, foreign-key, and check constraints at commit time. Idempotency keys return the original response on duplicate commits, even after a crash.
+- **Idempotent batch transactions** - operations staged locally and committed atomically, with the engine enforcing unique, foreign-key, and check constraints at commit time. Idempotency keys return the original response on duplicate commits, even after a crash.
 - **Full SQL access** through the DataFusion-backed `/sql` endpoint: recursive CTEs, window functions, `CREATE TABLE AS SELECT`, materialized views, and multi-statement execution.
 - **Schema management**: typed table creation, full schema catalog, and per-table descriptors.
 - **User/role/credentials management** via SQL: Argon2id-hashed catalog users, roles, and `GRANT`/`REVOKE` table-level permissions, all executed through `SqlAsync`.
@@ -56,12 +56,12 @@ The package has no runtime dependencies — only the .NET base class library.
 
 Task-focused, commented guides live in [`docs/`](docs):
 
-- [Quickstart](docs/quickstart.md) — install, start the daemon, write and run a complete program.
-- [Transactions](docs/transactions.md) — batch commits, idempotency keys, constraint handling.
-- [Queries](docs/queries.md) — every native condition type and the index it pushes down to.
-- [SQL](docs/sql.md) — recursive CTEs, window functions, advanced SQL.
-- [Authentication](docs/auth.md) — Bearer token, HTTP Basic, and open modes.
-- [Errors](docs/errors.md) — the exception hierarchy and recovery patterns.
+- [Quickstart](docs/quickstart.md) - install, start the daemon, write and run a complete program.
+- [Transactions](docs/transactions.md) - batch commits, idempotency keys, constraint handling.
+- [Queries](docs/queries.md) - every native condition type and the index it pushes down to.
+- [SQL](docs/sql.md) - recursive CTEs, window functions, advanced SQL.
+- [Authentication](docs/auth.md) - Bearer token, HTTP Basic, and open modes.
+- [Errors](docs/errors.md) - the exception hierarchy and recovery patterns.
 
 ## Quick Example
 
@@ -130,7 +130,7 @@ var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(60) };
 using var db = new MongrelDBClient("http://127.0.0.1:8453", token: null, username: null, password: null, http: http);
 ```
 
-A bearer token takes precedence over basic-auth credentials when both are supplied. When you pass your own `HttpClient`, the client does not dispose it — you retain ownership.
+A bearer token takes precedence over basic-auth credentials when both are supplied. When you pass your own `HttpClient`, the client does not dispose it - you retain ownership.
 
 ## Batch transactions
 
@@ -145,7 +145,7 @@ txn.DeleteByPk("orders", 2L);
 
 try
 {
-    List<Dictionary<string, object?>> results = await txn.CommitAsync(); // atomic — all or nothing
+    List<Dictionary<string, object?>> results = await txn.CommitAsync(); // atomic - all or nothing
 }
 catch (ConflictException e)
 {
@@ -154,7 +154,7 @@ catch (ConflictException e)
     txn.Rollback(); // discard locally as well
 }
 
-// Idempotent commit — safe to retry; the daemon returns the original response.
+// Idempotent commit - safe to retry; the daemon returns the original response.
 var txn2 = db.BeginTransaction();
 txn2.Put("orders", Cells.Of(1, 20L, 2, "Frank", 3, 100.00), returning: false);
 await txn2.CommitAsync(idempotencyKey: "order-20-create");
@@ -375,7 +375,7 @@ chmod +x bin/mongreldb-server
 Contributions are welcome. Please:
 
 1. Open an issue first for non-trivial changes.
-2. Add focused tests near your change — the suite must stay green.
+2. Add focused tests near your change - the suite must stay green.
 3. Keep the library dependency-free (.NET base class library only).
 
 ## License

@@ -57,18 +57,18 @@ public sealed class QueryBuilder
     /// <remarks>
     /// Available condition types include:
     /// <list type="bullet">
-    ///   <item><c>pk</c> — exact primary-key match (<c>{value: pk}</c>)</item>
-    ///   <item><c>bitmap_eq</c> — equality on a bitmap-indexed column</item>
-    ///   <item><c>bitmap_in</c> — IN predicate on a bitmap-indexed column</item>
-    ///   <item><c>range</c> — integer range predicate (lo/hi, inclusive)</item>
-    ///   <item><c>range_f64</c> — float range predicate (lo/hi + lo_inclusive/hi_inclusive)</item>
-    ///   <item><c>is_null</c> — null check</item>
-    ///   <item><c>is_not_null</c> — non-null check</item>
-    ///   <item><c>fm_contains</c> — full-text substring search (FM-index)</item>
-    ///   <item><c>fm_contains_all</c> — multiple substring patterns (all must match)</item>
-    ///   <item><c>ann</c> — dense vector similarity search (HNSW)</item>
-    ///   <item><c>sparse_match</c> — sparse vector match</item>
-    ///   <item><c>min_hash_similar</c> — MinHash similarity search</item>
+    ///   <item><c>pk</c> - exact primary-key match (<c>{value: pk}</c>)</item>
+    ///   <item><c>bitmap_eq</c> - equality on a bitmap-indexed column</item>
+    ///   <item><c>bitmap_in</c> - IN predicate on a bitmap-indexed column</item>
+    ///   <item><c>range</c> - integer range predicate (lo/hi, inclusive)</item>
+    ///   <item><c>range_f64</c> - float range predicate (lo/hi + lo_inclusive/hi_inclusive)</item>
+    ///   <item><c>is_null</c> - null check</item>
+    ///   <item><c>is_not_null</c> - non-null check</item>
+    ///   <item><c>fm_contains</c> - full-text substring search (FM-index)</item>
+    ///   <item><c>fm_contains_all</c> - multiple substring patterns (all must match)</item>
+    ///   <item><c>ann</c> - dense vector similarity search (HNSW)</item>
+    ///   <item><c>sparse_match</c> - sparse vector match</item>
+    ///   <item><c>min_hash_similar</c> - MinHash similarity search</item>
     /// </list>
     /// </remarks>
     /// <param name="condType">The condition type.</param>

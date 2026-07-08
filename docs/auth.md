@@ -2,10 +2,10 @@
 
 A `mongreldb-server` daemon runs in one of three modes:
 
-1. **Open** (default) — no auth required.
-2. **Bearer token** (`--auth-token <TOKEN>`) — every request must carry an
+1. **Open** (default) - no auth required.
+2. **Bearer token** (`--auth-token <TOKEN>`) - every request must carry an
    `Authorization: Bearer <TOKEN>` header.
-3. **HTTP Basic** (`--auth-users`) — every request must carry an
+3. **HTTP Basic** (`--auth-users`) - every request must carry an
    `Authorization: Basic <base64(user:pass)>` header.
 
 The .NET client supports all three through its constructors. This guide shows
@@ -98,7 +98,7 @@ using var db = new MongrelDBClient(
 
 ## Custom HttpClient and ownership
 
-The five-argument constructor accepts a custom `HttpClient` — use it for a
+The five-argument constructor accepts a custom `HttpClient` - use it for a
 custom `HttpClientHandler` (TLS, cookies), a proxy, an `HttpClientFactory`
 integration, or a named timeout policy. When you pass your own instance, the
 caller retains ownership and `Dispose()` will **not** dispose it (preventing
@@ -111,7 +111,7 @@ var http = httpClientFactory.CreateClient("MongrelDB");
 http.Timeout = TimeSpan.FromSeconds(10);
 
 var db = new MongrelDBClient(url, token, username: null, password: null, http);
-// db.Dispose() will NOT dispose `http` — the factory manages its lifetime.
+// db.Dispose() will NOT dispose `http` - the factory manages its lifetime.
 ```
 
 When you do not pass an `HttpClient`, the client creates one with a 30-second
@@ -198,7 +198,7 @@ you serve multiple authenticated users, build a client per user (or per
 request) with that user's token.
 
 **Disposing a shared HttpClient.** If you pass your own `HttpClient` (e.g. from
-`IHttpClientFactory`), do not let `using var db` dispose it unexpectedly —
+`IHttpClientFactory`), do not let `using var db` dispose it unexpectedly -
 the client intentionally avoids disposing externally-owned handlers, but make
 sure your own code does not dispose the handler underneath.
 
@@ -207,5 +207,5 @@ secret manager, or a file outside the repo. Never commit a real token.
 
 ## Next steps
 
-- [errors.md](errors.md) — `AuthException` and the rest of the exception hierarchy
-- [quickstart.md](quickstart.md) — the full end-to-end walkthrough
+- [errors.md](errors.md) - `AuthException` and the rest of the exception hierarchy
+- [quickstart.md](quickstart.md) - the full end-to-end walkthrough

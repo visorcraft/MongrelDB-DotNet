@@ -1,4 +1,4 @@
-# MongrelDB .NET Client — Guides
+# MongrelDB .NET Client - Guides
 
 Task-focused guides for the pure C# MongrelDB HTTP client (.NET 8,
 `System.Net.Http.HttpClient`, no external NuGet dependencies). For the full

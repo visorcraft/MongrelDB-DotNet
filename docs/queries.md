@@ -1,7 +1,7 @@
 # Queries
 
 The fluent `QueryBuilder` pushes conditions down to MongrelDB's native indexes
-for sub-millisecond lookups — bitmap, learned-range, FM-index full text, HNSW
+for sub-millisecond lookups - bitmap, learned-range, FM-index full text, HNSW
 vector similarity, and more. Each condition type maps to one specialized
 index; conditions are AND-ed together.
 
@@ -50,7 +50,7 @@ shape:
 numeric **column id** (`long`), never the column name. Always suffix integer
 literals with `L` so they box as `long`.
 
-### `pk` — exact primary-key match
+### `pk` - exact primary-key match
 
 The fastest lookup. `value` is the primary-key value.
 
@@ -60,7 +60,7 @@ await db.Query("orders")
     .ExecuteAsync();
 ```
 
-### `range` — integer range (learned-range index)
+### `range` - integer range (learned-range index)
 
 Inclusive bounds. Omit `lo` or `hi` for an open range.
 
@@ -80,7 +80,7 @@ await db.Query("orders")
     .ExecuteAsync();
 ```
 
-### `range_f64` — float range with inclusive/exclusive control
+### `range_f64` - float range with inclusive/exclusive control
 
 Adds `lo_inclusive` / `hi_inclusive` flags (default inclusive).
 
@@ -97,7 +97,7 @@ await db.Query("orders")
     .ExecuteAsync();
 ```
 
-### `bitmap_eq` — equality on a bitmap-indexed column
+### `bitmap_eq` - equality on a bitmap-indexed column
 
 Best for low-cardinality columns (status, category, booleans).
 
@@ -107,7 +107,7 @@ await db.Query("orders")
     .ExecuteAsync();
 ```
 
-### `bitmap_in` — IN predicate on a bitmap-indexed column
+### `bitmap_in` - IN predicate on a bitmap-indexed column
 
 Match any of a set of values.
 
@@ -121,17 +121,17 @@ await db.Query("orders")
     .ExecuteAsync();
 ```
 
-### `is_null` / `is_not_null` — null checks
+### `is_null` / `is_not_null` - null checks
 
 ```csharp
 await db.Query("orders").Where("is_null", new Dictionary<string, object?> { ["column"] = 3L }).ExecuteAsync();
 await db.Query("orders").Where("is_not_null", new Dictionary<string, object?> { ["column"] = 3L }).ExecuteAsync();
 ```
 
-### `fm_contains` — full-text substring search (FM-index)
+### `fm_contains` - full-text substring search (FM-index)
 
 Substring match within a column. Use `pattern` (the server key) or the
-friendly `value` alias — both translate to `pattern` on the wire for FTS
+friendly `value` alias - both translate to `pattern` on the wire for FTS
 conditions.
 
 ```csharp
@@ -150,7 +150,7 @@ await db.Query("documents")
     .ExecuteAsync();
 ```
 
-### `fm_contains_all` — multiple substrings, all must match
+### `fm_contains_all` - multiple substrings, all must match
 
 ```csharp
 await db.Query("documents")
@@ -162,7 +162,7 @@ await db.Query("documents")
     .ExecuteAsync();
 ```
 
-### `ann` — dense vector similarity (HNSW)
+### `ann` - dense vector similarity (HNSW)
 
 Approximate nearest-neighbors over a vector column. `k` is the result count.
 Pass the query vector as `float[]` or `List<object?>`.
@@ -178,7 +178,7 @@ await db.Query("embeddings")
     .ExecuteAsync();
 ```
 
-### `sparse_match` — sparse vector match
+### `sparse_match` - sparse vector match
 
 For sparse/bag-of-words vectors.
 
@@ -193,7 +193,7 @@ await db.Query("docs")
     .ExecuteAsync();
 ```
 
-### `min_hash_similar` — MinHash similarity
+### `min_hash_similar` - MinHash similarity
 
 Near-duplicate detection via MinHash signatures.
 
@@ -305,7 +305,7 @@ The `value` → `pattern` alias applies **only** to FTS conditions, because
 
 ## Putting it together
 
-A realistic combined lookup — bitmap equality + range + projection + limit +
+A realistic combined lookup - bitmap equality + range + projection + limit +
 truncation check:
 
 ```csharp
@@ -327,4 +327,4 @@ public async Task<List<Dictionary<string, object?>>> TopSpendersAsync(
 ```
 
 For arbitrary predicates, joins, and aggregations that the native indexes do
-not cover, use SQL instead — see [sql.md](sql.md).
+not cover, use SQL instead - see [sql.md](sql.md).

@@ -10,11 +10,11 @@ namespace Visorcraft.MongrelDB;
 /// failure, or catch one of the specific subclasses:
 /// </para>
 /// <list type="bullet">
-///   <item><see cref="AuthException"/> — HTTP 401/403 (bad or missing credentials)</item>
-///   <item><see cref="NotFoundException"/> — HTTP 404 (missing table, schema, etc.)</item>
-///   <item><see cref="ConflictException"/> — HTTP 409 (unique, foreign-key, check, or
+///   <item><see cref="AuthException"/> - HTTP 401/403 (bad or missing credentials)</item>
+///   <item><see cref="NotFoundException"/> - HTTP 404 (missing table, schema, etc.)</item>
+///   <item><see cref="ConflictException"/> - HTTP 409 (unique, foreign-key, check, or
 ///       trigger constraint violations)</item>
-///   <item><see cref="QueryException"/> — HTTP 400 or 5xx, and any other request-level
+///   <item><see cref="QueryException"/> - HTTP 400 or 5xx, and any other request-level
 ///       failure not covered by the more specific subclasses</item>
 /// </list>
 /// <para>
@@ -61,7 +61,7 @@ public class MongrelDBException : Exception
 }
 
 /// <summary>
-/// Raised for HTTP 401 or 403 responses — bad or missing credentials.
+/// Raised for HTTP 401 or 403 responses - bad or missing credentials.
 /// </summary>
 /// <remarks>
 /// The daemon returns these when started in <c>--auth-token</c> or
@@ -74,7 +74,7 @@ public class AuthException : MongrelDBException
 }
 
 /// <summary>
-/// Raised for HTTP 404 responses — a missing table, schema, or other resource.
+/// Raised for HTTP 404 responses - a missing table, schema, or other resource.
 /// </summary>
 public class NotFoundException : MongrelDBException
 {
@@ -83,7 +83,7 @@ public class NotFoundException : MongrelDBException
 }
 
 /// <summary>
-/// Raised for HTTP 409 responses — a unique, foreign-key, check, or trigger
+/// Raised for HTTP 409 responses - a unique, foreign-key, check, or trigger
 /// constraint violation.
 /// </summary>
 /// <remarks>

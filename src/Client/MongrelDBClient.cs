@@ -247,7 +247,7 @@ public sealed class MongrelDBClient : IDisposable
 
     /// <summary>
     /// Inserts a row. <paramref name="idempotencyKey"/>, when non-null and
-    /// non-empty, makes the commit safe to retry — the daemon returns the
+    /// non-empty, makes the commit safe to retry - the daemon returns the
     /// original result on duplicate commits.
     /// </summary>
     /// <param name="table">The target table.</param>
@@ -615,7 +615,7 @@ public sealed class MongrelDBClient : IDisposable
     /// <summary>
     /// Flattens a column-id-to-value map to the server's flat
     /// <c>[col_id, value, col_id, value, ...]</c> array. Pair order is not
-    /// significant — each value is preceded by its own column id.
+    /// significant - each value is preceded by its own column id.
     /// </summary>
     internal static List<object?> FlattenCells(Cells cells)
     {
@@ -886,7 +886,7 @@ public sealed class MongrelDBClient : IDisposable
 /// <summary>
 /// A column-id-to-value map. The client flattens it to the server's on-wire
 /// <c>[col_id, value, col_id, value, ...]</c> array before sending. Pair order
-/// is irrelevant — each value is preceded by its own column id.
+/// is irrelevant - each value is preceded by its own column id.
 /// </summary>
 public sealed class Cells : Dictionary<long, object?>
 {
