@@ -91,18 +91,21 @@ jobs:
       - name: Run live tests
         run: dotnet test --configuration Release --no-build --logger "console;verbosity=normal"
 
-      # examples are verified manually; wired here on a best-effort, non-blocking basis.
+      # Each example is a top-level-statements Program.cs; compile and run each
+      # in its own throwaway console project that references the client.
       - name: Run examples
-        continue-on-error: true
         run: |
-          mkdir -p /tmp/ex-demo && cd /tmp/ex-demo
-          dotnet new console -n ExampleRunner
-          cd ExampleRunner
-          dotnet add reference /workspace/src/Client/MongrelDB.csproj 2>/dev/null || true
-          for f in /workspace/examples/*.cs; do
-            echo "=== Running $(basename $f) ==="
+          mkdir -p /tmp/ex-runner && cd /tmp/ex-runner
+          for f in "$GITHUB_WORKSPACE"/examples/*.cs; do
+            name=$(basename "$f" .cs)
+            echo "=== Running $name ==="
+            rm -rf "$name"
+            mkdir -p "$name" && cd "$name"
+            dotnet new console --force
+            dotnet add reference "$GITHUB_WORKSPACE/MongrelDB.csproj"
             cp "$f" Program.cs
-            dotnet run --project . 2>/dev/null || { echo "Note: example may need project adjustment"; }
+            dotnet run --force || { echo "FAILED: $name"; exit 1; }
+            cd /tmp/ex-runner
           done
 
       - name: Dump server log on failure
