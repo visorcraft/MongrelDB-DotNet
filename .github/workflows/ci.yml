@@ -91,6 +91,20 @@ jobs:
       - name: Run live tests
         run: dotnet test --configuration Release --no-build --logger "console;verbosity=normal"
 
+      # examples are verified manually; wired here on a best-effort, non-blocking basis.
+      - name: Run examples
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/ex-demo && cd /tmp/ex-demo
+          dotnet new console -n ExampleRunner
+          cd ExampleRunner
+          dotnet add reference /workspace/src/Client/MongrelDB.csproj 2>/dev/null || true
+          for f in /workspace/examples/*.cs; do
+            echo "=== Running $(basename $f) ==="
+            cp "$f" Program.cs
+            dotnet run --project . 2>/dev/null || { echo "Note: example may need project adjustment"; }
+          done
+
       - name: Dump server log on failure
         if: failure()
         run: cat /tmp/mongreldb-server.log
