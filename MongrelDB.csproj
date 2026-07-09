@@ -42,6 +42,10 @@
   <ItemGroup>
     <Compile Remove="tests/**/*" />
     <None Remove="tests/**/*" />
+    <!-- examples/*.cs are runnable demos with their own top-level statements;
+         compiling them into the library trips CS8802 "Only one compilation
+         unit can have top-level statements". Exclude them from the build. -->
+    <Compile Remove="examples\**" />
   </ItemGroup>
 
   <ItemGroup>
