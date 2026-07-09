@@ -240,7 +240,11 @@ public sealed class MongrelDBClient : IDisposable
         ArgumentNullException.ThrowIfNull(table);
         byte[] body = await GetAsync("/tables/" + UrlPathEscape(table) + "/count", cancellationToken).ConfigureAwait(false);
         var resp = Deserialize<CountResponse>(body);
-        return resp?.Count ?? 0L;
+        if (resp == null || resp.Count == null)
+        {
+            throw new QueryException("mongreldb: malformed count response");
+        }
+        return resp.Count.Value;
     }
 
     // ── CRUD (via the Kit typed transaction endpoint) ─────────────────────
@@ -734,16 +738,13 @@ public sealed class MongrelDBClient : IDisposable
 
     private static object ReadNumber(JsonElement el)
     {
-        // Preserve integer precision for values that fit in a long; use double
-        // otherwise (including exponents and fractions). BigInteger is used as
-        // a last resort for huge integers, so values round-trip losslessly.
+        // Preserve integer precision: try exact integer types first (Int64,
+        // UInt64), then decimal for large fixed-point, then double for
+        // floating-point. Trying double before UInt64/decimal loses precision
+        // for big integers.
         if (el.TryGetInt64(out long l))
         {
             return l;
-        }
-        if (el.TryGetDouble(out double d))
-        {
-            return d;
         }
         if (el.TryGetUInt64(out ulong u))
         {
@@ -752,6 +753,10 @@ public sealed class MongrelDBClient : IDisposable
         if (decimal.TryParse(el.GetRawText(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out decimal dec))
         {
             return dec;
+        }
+        if (el.TryGetDouble(out double d))
+        {
+            return d;
         }
         return el.GetRawText();
     }
@@ -770,7 +775,9 @@ public sealed class MongrelDBClient : IDisposable
         var sb = new StringBuilder(segment.Length);
         foreach (char c in segment)
         {
-            if (c == '/' || c == '-' || c == '_' || c == '.' || c == '~'
+            // Only RFC 3986 unreserved characters pass through unescaped.
+            // '/' is encoded so a table name cannot inject an extra path segment.
+            if (c == '-' || c == '_' || c == '.' || c == '~'
                 || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
             {
                 sb.Append(c);
@@ -879,7 +886,7 @@ public sealed class MongrelDBClient : IDisposable
     private sealed class CountResponse
     {
         [JsonPropertyName("count")]
-        public long Count { get; set; }
+        public long? Count { get; set; }
     }
 }
 
