@@ -46,6 +46,10 @@ public sealed class Transaction
     /// <returns>This transaction, for chaining.</returns>
     public Transaction Put(string table, Cells cells, bool returning)
     {
+        if (_committed)
+        {
+            throw new InvalidOperationException("mongreldb: transaction already committed");
+        }
         ArgumentNullException.ThrowIfNull(table);
         ArgumentNullException.ThrowIfNull(cells);
         var op = new Dictionary<string, object?>
@@ -73,6 +77,10 @@ public sealed class Transaction
     /// <returns>This transaction, for chaining.</returns>
     public Transaction Upsert(string table, Cells cells, Cells? updateCells, bool returning)
     {
+        if (_committed)
+        {
+            throw new InvalidOperationException("mongreldb: transaction already committed");
+        }
         ArgumentNullException.ThrowIfNull(table);
         ArgumentNullException.ThrowIfNull(cells);
         var upsert = new Dictionary<string, object?>
@@ -98,6 +106,10 @@ public sealed class Transaction
     /// <returns>This transaction, for chaining.</returns>
     public Transaction Delete(string table, long rowId)
     {
+        if (_committed)
+        {
+            throw new InvalidOperationException("mongreldb: transaction already committed");
+        }
         ArgumentNullException.ThrowIfNull(table);
         var op = new Dictionary<string, object?>
         {
@@ -119,6 +131,10 @@ public sealed class Transaction
     /// <returns>This transaction, for chaining.</returns>
     public Transaction DeleteByPk(string table, object? pk)
     {
+        if (_committed)
+        {
+            throw new InvalidOperationException("mongreldb: transaction already committed");
+        }
         ArgumentNullException.ThrowIfNull(table);
         ArgumentNullException.ThrowIfNull(pk);
         var op = new Dictionary<string, object?>

@@ -262,13 +262,13 @@ public sealed class QueryBuilder
 
     private static object ReadNumber(JsonElement el)
     {
+        // Preserve integer precision: try exact integer types first (Int64,
+        // UInt64), then decimal for large fixed-point, then double for
+        // floating-point. Trying double before UInt64/decimal loses precision
+        // for big integers.
         if (el.TryGetInt64(out long l))
         {
             return l;
-        }
-        if (el.TryGetDouble(out double d))
-        {
-            return d;
         }
         if (el.TryGetUInt64(out ulong u))
         {
@@ -277,6 +277,10 @@ public sealed class QueryBuilder
         if (decimal.TryParse(el.GetRawText(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out decimal dec))
         {
             return dec;
+        }
+        if (el.TryGetDouble(out double d))
+        {
+            return d;
         }
         return el.GetRawText();
     }
