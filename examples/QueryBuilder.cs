@@ -41,7 +41,7 @@ Console.WriteLine("Inserted 5 rows");
 // Range condition: scores in [60.0, 90.0]. "column" maps to column_id, so pass
 // the numeric column id (3L), not the name.
 List<Dictionary<string, object?>> rng = await db.Query(Table)
-    .Where("range", new Dictionary<string, object?> { ["column"] = 3L, ["min"] = 60.0, ["max"] = 90.0 })
+    .Where("range_f64", new Dictionary<string, object?> { ["column"] = 3L, ["min"] = 60.0, ["max"] = 90.0, ["min_inclusive"] = true, ["max_inclusive"] = true })
     .ExecuteAsync();
 Console.WriteLine($"Range query (score in [60,90]) returned {rng.Count} rows:");
 foreach (var row in rng)
