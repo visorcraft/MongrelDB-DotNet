@@ -183,6 +183,8 @@ public class LiveTests : IAsyncLifetime
             .Where("pk", new Dictionary<string, object?> { ["value"] = 42L })
             .ExecuteAsync();
         Assert.Single(rows);
+        // The returned row must carry the queried PK value.
+        Assert.Equal(42L, CellLong(rows[0], 1));
     }
 
     [SkippableFact]
@@ -199,8 +201,16 @@ public class LiveTests : IAsyncLifetime
         QueryBuilder q = _db.Query(name)
             .Where("range", new Dictionary<string, object?> { ["column"] = 2L, ["min"] = 100L, ["max"] = 150L });
         List<Dictionary<string, object?>> rows = await q.ExecuteAsync();
-        Assert.NotEmpty(rows);
+        // Only the row with amount=120 (pk=2) falls in [100, 150].
+        Assert.Single(rows);
         Assert.False(q.Truncated);
+        // Verify the PK and amount values of returned rows match the filter range.
+        foreach (Dictionary<string, object?> row in rows)
+        {
+            Assert.Equal(2L, CellLong(row, 1));
+            long amt = CellLong(row, 2);
+            Assert.InRange(amt, 100L, 150L);
+        }
     }
 
     [SkippableFact]
@@ -249,13 +259,21 @@ public class LiveTests : IAsyncLifetime
     }
 
     [SkippableFact]
-    public async Task SqlRunsStatementWithoutError()
+    public async Task SqlInsertIncreasesCountAndSelectReturnsRow()
     {
         RequireDaemon();
-        // SELECT 1 yields no JSON rows (the daemon streams Arrow IPC), so we
-        // just assert it runs without error.
-        List<Dictionary<string, object?>> rows = await _db!.SqlAsync("SELECT 1");
-        Assert.NotNull(rows);
+        string name = UniqueTable("dotnet_sql");
+        await FreshTableAsync(name, IntCol(1, "id", true), IntCol(2, "amount", false));
+
+        Assert.Equal(0L, await _db!.CountAsync(name));
+        // INSERT via SQL must increase the row count.
+        await _db.SqlAsync($"INSERT INTO {name} (id, amount) VALUES (10, 42)");
+        Assert.Equal(1L, await _db.CountAsync(name));
+
+        // JSON SQL mode must return the inserted row.
+        List<Dictionary<string, object?>> rows = await _db.SqlAsync($"SELECT id, amount FROM {name}");
+        Assert.Single(rows);
+        Assert.Equal(10L, CellJsonLong(rows[0], "id"));
     }
 
     [SkippableFact]
@@ -332,6 +350,9 @@ public class LiveTests : IAsyncLifetime
             .Where("pk", new Dictionary<string, object?> { ["value"] = 1L })
             .ExecuteAsync();
         Assert.Single(rows);
+        // Assert the PK and the updated cell value.
+        Assert.Equal(1L, CellLong(rows[0], 1));
+        Assert.Equal(999L, CellLong(rows[0], 2));
     }
 
     [SkippableFact]
@@ -549,5 +570,49 @@ public class LiveTests : IAsyncLifetime
     {
         try { return JsonSerializer.Serialize(dict); }
         catch { return $"({dict.Count} keys)"; }
+    }
+
+    /// <summary>
+    /// Extracts a long value for <paramref name="colId"/> from a Kit row's flat
+    /// cells array (shape: <c>[col_id, value, ...]</c>).
+    /// </summary>
+    private static long CellLong(Dictionary<string, object?> row, long colId)
+    {
+        if (row.TryGetValue("cells", out object? cellsObj) && cellsObj is IList<object?> cells)
+        {
+            for (int i = 0; i + 1 < cells.Count; i += 2)
+            {
+                if (cells[i] is long id && id == colId)
+                {
+                    return ToLong(cells[i + 1], colId);
+                }
+            }
+        }
+        throw new Xunit.Sdk.XunitException($"cell {colId} not found in row");
+    }
+
+    /// <summary>
+    /// Extracts a long value for <paramref name="key"/> from a JSON SQL row
+    /// (an object keyed by column name).
+    /// </summary>
+    private static long CellJsonLong(Dictionary<string, object?> row, string key)
+    {
+        if (row.TryGetValue(key, out object? v))
+        {
+            return ToLong(v, 0);
+        }
+        throw new Xunit.Sdk.XunitException($"column {key} not found in row");
+    }
+
+    private static long ToLong(object? v, long colId)
+    {
+        return v switch
+        {
+            long l => l,
+            int i => i,
+            decimal d => (long)d,
+            double dd => (long)dd,
+            _ => throw new Xunit.Sdk.XunitException($"cell {colId} value not numeric: {v}"),
+        };
     }
 }

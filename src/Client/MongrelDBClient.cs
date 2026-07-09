@@ -40,6 +40,13 @@ public sealed class MongrelDBClient : IDisposable
     /// </summary>
     public const string DefaultBaseURL = "http://127.0.0.1:8453";
 
+    /// <summary>
+    /// Maximum response body size (256 MB). Bodies larger than this are aborted
+    /// with a <see cref="QueryException"/> to guard client memory against a
+    /// malicious or buggy server.
+    /// </summary>
+    public const int MaxResponseBytes = 268435456;
+
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
 
     // The daemon's JSON is ASCII-friendly, but we disable escaping and relax
@@ -375,20 +382,22 @@ public sealed class MongrelDBClient : IDisposable
     // ── SQL ───────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Executes a SQL statement via the <c>/sql</c> endpoint.
+    /// Executes a SQL statement via the <c>/sql</c> endpoint, requesting JSON
+    /// output. The server returns a JSON array of row objects keyed by column
+    /// name, e.g. <c>[{"id": 1, "name": "Alice", "score": 95.5}]</c>. For
+    /// statements that yield no rows (DDL/DML), it returns an empty list.
     /// </summary>
-    /// <remarks>
-    /// When the daemon returns a JSON result set, the rows are decoded and
-    /// returned; for statements that yield no rows (DDL/DML) or a non-JSON
-    /// (Arrow IPC) body, it returns an empty list and a null (absent) error.
-    /// </remarks>
     /// <param name="sql">The SQL statement.</param>
     /// <param name="cancellationToken">A token to cancel the request.</param>
     /// <returns>The decoded rows, or an empty list.</returns>
     public async Task<List<Dictionary<string, object?>>> SqlAsync(string sql, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sql);
-        var payload = new Dictionary<string, object?> { ["sql"] = sql };
+        var payload = new Dictionary<string, object?>
+        {
+            ["sql"] = sql,
+            ["format"] = "json",
+        };
         byte[] body = await PostAsync("/sql", payload, cancellationToken).ConfigureAwait(false);
 
         byte first = FirstNonWhitespace(body);
@@ -397,17 +406,13 @@ public sealed class MongrelDBClient : IDisposable
             return new List<Dictionary<string, object?>>();
         }
 
-        // The /sql endpoint generally streams Arrow IPC bytes for SELECTs; only
-        // decode when the body is actually JSON to avoid noise.
-        if (first == (byte)'{' || first == (byte)'[')
+        // Requested format is JSON; decode the array of row objects.
+        using JsonDocument doc = JsonDocument.Parse(body);
+        if (doc.RootElement.ValueKind == JsonValueKind.Array)
         {
-            using JsonDocument doc = JsonDocument.Parse(body);
-            if (doc.RootElement.ValueKind == JsonValueKind.Array)
-            {
-                return ReadRowList(doc.RootElement);
-            }
-            // A single JSON object (e.g. an error envelope) is not a row set.
+            return ReadRowList(doc.RootElement);
         }
+        // A single JSON object (e.g. an error envelope) is not a row set.
         return new List<Dictionary<string, object?>>();
     }
 
@@ -586,6 +591,11 @@ public sealed class MongrelDBClient : IDisposable
         using (content)
         {
             byte[] data = resp.Content is null ? Array.Empty<byte>() : await resp.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+
+            if (data.Length > MaxResponseBytes)
+            {
+                throw new QueryException($"mongreldb: response body exceeds maximum size of {MaxResponseBytes} bytes");
+            }
 
             int status = (int)resp.StatusCode;
             if (status < 200 || status >= 300)
