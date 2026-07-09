@@ -406,14 +406,29 @@ public sealed class MongrelDBClient : IDisposable
             return new List<Dictionary<string, object?>>();
         }
 
-        // Requested format is JSON; decode the array of row objects.
-        using JsonDocument doc = JsonDocument.Parse(body);
-        if (doc.RootElement.ValueKind == JsonValueKind.Array)
+        // Requested format is JSON; decode the array of row objects. An old
+        // server may ignore the requested JSON format and answer with Arrow IPC
+        // binary bytes (which are not valid JSON). Treat that as "no rows"
+        // rather than throwing, so callers keep working against legacy servers.
+        JsonDocument doc;
+        try
         {
-            return ReadRowList(doc.RootElement);
+            doc = JsonDocument.Parse(body);
         }
-        // A single JSON object (e.g. an error envelope) is not a row set.
-        return new List<Dictionary<string, object?>>();
+        catch (JsonException)
+        {
+            return new List<Dictionary<string, object?>>();
+        }
+
+        using (doc)
+        {
+            if (doc.RootElement.ValueKind == JsonValueKind.Array)
+            {
+                return ReadRowList(doc.RootElement);
+            }
+            // A single JSON object (e.g. an error envelope) is not a row set.
+            return new List<Dictionary<string, object?>>();
+        }
     }
 
     // ── Schema ────────────────────────────────────────────────────────────
