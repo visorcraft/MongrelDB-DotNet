@@ -120,6 +120,75 @@ Console.WriteLine($"count: {n}"); // 2
 await db.SqlAsync("UPDATE orders SET amount = 200.0 WHERE customer = 'Bob'");
 ```
 
+## Schema constraints
+
+`CreateTableAsync` forwards every column-spec key the caller puts in the
+`Dictionary` to the daemon's `/kit/create_table` endpoint. The engine
+recognises `enum_variants` (required for `ty: "enum"`), `default_value`
+(per-column default discriminator, e.g. `"now"` or `"uuid"`), and a
+top-level `constraints` block (unique / foreign-key / check).
+
+```csharp
+await db.CreateTableAsync("orders", new[]
+{
+    new Dictionary<string, object?>
+    {
+        ["id"] = 1L, ["name"] = "id",   ["ty"] = "int64",
+        ["primary_key"] = true,  ["nullable"] = false,
+    },
+    // Enum column: value must be one of the three strings.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 2L, ["name"] = "status", ["ty"] = "enum",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["enum_variants"] = new[] { "draft", "active", "archived" },
+        ["default_value"] = "draft",
+    },
+    // Timestamp column: engine fills "now" when the cell is omitted.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 3L, ["name"] = "created_at", ["ty"] = "timestamp_nanos",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["default_value"] = "now",
+    },
+});
+```
+
+`enum_variants` arrives at the engine as a JSON array of strings, in
+order; `default_value` arrives as a JSON string. The current
+`CreateTableAsync(string, IEnumerable<Dictionary<string, object?>>)`
+signature forwards both keys verbatim, so no client-side rename is needed.
+
+### CHECK constraints (regex, range, equality)
+
+CHECK constraints - including regex, range, equality, and boolean
+composition - live in a top-level `constraints` block on the same
+`/kit/create_table` payload:
+
+```json
+{
+  "name": "users",
+  "columns": [
+    { "id": 1, "name": "id",    "ty": "int64",   "primary_key": true,  "nullable": false },
+    { "id": 2, "name": "email", "ty": "varchar" }
+  ],
+  "constraints": {
+    "checks": [
+      {
+        "id": 1,
+        "name": "email_format",
+        "expr": { "regex": { "col": 2, "pattern": "^[^@]+@[^@]+$", "negated": false, "case_insensitive": true } }
+      }
+    ]
+  }
+}
+```
+
+The .NET client's typed `CreateTableAsync` does not yet expose a
+`constraints` parameter, so regex / range / FK CHECKs are wired through
+the engine's `/kit/create_table` payload by hand from callers that need
+them today.
+
 ## Authentication
 
 ```csharp

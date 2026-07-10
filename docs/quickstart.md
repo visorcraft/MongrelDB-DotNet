@@ -145,7 +145,51 @@ row: 2=Bob
 total rows: 2
 ```
 
-## 5. What each part does
+## 5. Enum, default value, and CHECK constraints
+
+`CreateTableAsync` forwards every key in each column `Dictionary` straight
+to the daemon's `/kit/create_table` endpoint. Two optional keys are
+recognised on top of `id`, `name`, `ty`, `primary_key`, `nullable`:
+
+| Key | Type | Effect |
+|-----|------|--------|
+| `enum_variants` | `string[]` | Required when `ty` is `"enum"`. Ordered list of allowed values. |
+| `default_value` | `string` | Per-column default discriminator. The engine maps `"now"` to the current timestamp and `"uuid"` to a generated UUID v4; other strings are rejected with a `BAD_REQUEST` error. |
+
+Both arrive on the wire verbatim - the codec does not rename or strip them.
+
+```csharp
+await db.CreateTableAsync("users", new[]
+{
+    new Dictionary<string, object?>
+    {
+        ["id"] = 1L, ["name"] = "id", ["ty"] = "int64",
+        ["primary_key"] = true,  ["nullable"] = false,
+    },
+    // Enum column with three allowed values and a default.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 2L, ["name"] = "role", ["ty"] = "enum",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["enum_variants"] = new[] { "admin", "user", "guest" },
+        ["default_value"] = "guest",
+    },
+    // Timestamp column that fills in "now" on insert.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 3L, ["name"] = "created_at", ["ty"] = "timestamp_nanos",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["default_value"] = "now",
+    },
+});
+```
+
+CHECK constraints (regex, range, equality, boolean composition) live in a
+top-level `constraints` block on the same payload - the on-wire shape is
+shown in the README's [Schema constraints](../README.md#schema-constraints)
+section.
+
+## 6. What each part does
 
 | Code | What it does |
 |------|--------------|
