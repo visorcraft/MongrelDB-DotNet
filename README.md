@@ -124,8 +124,8 @@ await db.SqlAsync("UPDATE orders SET amount = 200.0 WHERE customer = 'Bob'");
 
 `CreateTableAsync` forwards every column-spec key the caller puts in the
 `Dictionary` to the daemon's `/kit/create_table` endpoint. The engine
-recognises `enum_variants` (required for `ty: "enum"`), `default_value`
-(per-column default discriminator, e.g. `"now"` or `"uuid"`), and a
+recognises `enum_variants` (required for `ty: "enum"`), scalar `default_value`,
+dynamic `default_expr` (`"now"` or `"uuid"`),
 top-level `constraints` block (unique / foreign-key / check).
 
 ```csharp
@@ -155,7 +155,7 @@ await db.CreateTableAsync("orders", new[]
 ```
 
 `enum_variants` arrives at the engine as a JSON array of strings, in
-order; `default_value` arrives as a JSON string. The current
+order; `default_value` preserves its JSON scalar type. The current
 `CreateTableAsync(string, IEnumerable<Dictionary<string, object?>>)`
 signature forwards both keys verbatim, so no client-side rename is needed.
 

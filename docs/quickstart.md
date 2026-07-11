@@ -154,7 +154,8 @@ recognised on top of `id`, `name`, `ty`, `primary_key`, `nullable`:
 | Key | Type | Effect |
 |-----|------|--------|
 | `enum_variants` | `string[]` | Required when `ty` is `"enum"`. Ordered list of allowed values. |
-| `default_value` | `string` | Per-column default discriminator. The engine maps `"now"` to the current timestamp and `"uuid"` to a generated UUID v4; other strings are rejected with a `BAD_REQUEST` error. |
+| `default_value` | JSON scalar | Static per-column default, preserving string/number/bool type. |
+| `default_expr` | `string` | Dynamic default: `"now"` or `"uuid"`. |
 
 Both arrive on the wire verbatim - the codec does not rename or strip them.
 

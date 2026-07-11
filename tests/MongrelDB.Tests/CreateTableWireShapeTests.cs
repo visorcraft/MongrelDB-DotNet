@@ -85,6 +85,7 @@ public class CreateTableWireShapeTests
                 ["ty"] = "enum",
                 ["enum_variants"] = new List<object?> { "draft", "active", "archived" },
                 ["default_value"] = "draft",
+                ["default_expr"] = "uuid",
                 ["nullable"] = false,
             },
         }, out _, new Dictionary<string, object?>
@@ -116,6 +117,7 @@ public class CreateTableWireShapeTests
         // Keys must appear with the exact names the engine reads on the wire.
         Assert.True(statusCol.TryGetProperty("enum_variants", out _), "expected enum_variants key on status column");
         Assert.True(statusCol.TryGetProperty("default_value", out _), "expected default_value key on status column");
+        Assert.Equal("uuid", statusCol.GetProperty("default_expr").GetString());
         Assert.Equal("status_known", doc.RootElement.GetProperty("constraints")
             .GetProperty("checks")[0].GetProperty("name").GetString());
     }
