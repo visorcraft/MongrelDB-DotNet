@@ -161,7 +161,7 @@ public class LiveTests : IAsyncLifetime
 
         // Read it back through the typed API and the individual getters.
         Assert.Equal(1000UL, await _db!.HistoryRetentionEpochsAsync());
-        ulong earliestBefore = await _db.EarliestRetainedEpochAsync();
+        ulong earliestBefore = await _db!.EarliestRetainedEpochAsync();
 
         // Capture the current visible epoch before writing.
         long epochBefore = await ReadCurrentEpochAsync();
@@ -170,15 +170,15 @@ public class LiveTests : IAsyncLifetime
         await FreshTableAsync(name, IntCol(1, "id", true), IntCol(2, "amount", false));
 
         // Insert a row. Each commit advances the visible epoch.
-        await _db.PutAsync(name, Cells.Of(1, 1L, 2, 50L));
+        await _db!.PutAsync(name, Cells.Of(1, 1L, 2, 50L));
         long insertEpoch = await ReadCurrentEpochAsync();
         Assert.True(insertEpoch > epochBefore, "insert should advance the epoch");
 
         // Update the same row so the current value differs from the insert-time value.
-        await _db.PutAsync(name, Cells.Of(1, 1L, 2, 999L));
+        await _db!.PutAsync(name, Cells.Of(1, 1L, 2, 999L));
 
         // The pre-update value must still be readable at the insert epoch.
-        List<Dictionary<string, object?>> rows = await _db.SqlAsync(
+        List<Dictionary<string, object?>> rows = await _db!.SqlAsync(
             $"SELECT amount FROM {name} AS OF EPOCH {insertEpoch} WHERE id = 1");
         Assert.Single(rows);
         Assert.Equal(50L, CellJsonLong(rows[0], "amount"));
@@ -186,10 +186,10 @@ public class LiveTests : IAsyncLifetime
         // Shrinking the window and re-expanding it cannot restore already-pruned history.
         // The engine may retain more than requested, so we only assert monotonicity:
         // re-expanding cannot move earliest_retained_epoch backward.
-        await _db.SetHistoryRetentionEpochsAsync(1);
-        ulong earliestAfterShrink = await _db.EarliestRetainedEpochAsync();
-        await _db.SetHistoryRetentionEpochsAsync(1000);
-        Assert.Equal(earliestAfterShrink, await _db.EarliestRetainedEpochAsync());
+        await _db!.SetHistoryRetentionEpochsAsync(1);
+        ulong earliestAfterShrink = await _db!.EarliestRetainedEpochAsync();
+        await _db!.SetHistoryRetentionEpochsAsync(1000);
+        Assert.Equal(earliestAfterShrink, await _db!.EarliestRetainedEpochAsync());
         Assert.True(earliestAfterShrink >= earliestBefore, "earliest retained epoch must not move backward");
     }
 
