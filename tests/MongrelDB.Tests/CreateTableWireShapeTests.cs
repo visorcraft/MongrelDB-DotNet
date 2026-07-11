@@ -18,6 +18,17 @@ namespace MongrelDB.Tests;
 /// </summary>
 public class CreateTableWireShapeTests
 {
+    [Fact]
+    public void Static_Default_Matrix_Preserves_JSON_Scalars()
+    {
+        object?[] values = ["text", 3, true, null, "now"];
+        foreach (object? value in values)
+        {
+            string json = JsonSerializer.Serialize(new Dictionary<string, object?> { ["default_value"] = value });
+            using JsonDocument doc = JsonDocument.Parse(json);
+            Assert.Equal(JsonSerializer.Serialize(value), doc.RootElement.GetProperty("default_value").GetRawText());
+        }
+    }
     // CapturingHandler subclasses HttpMessageHandler to intercept the outgoing
     // HttpRequestMessage. The real HTTP transport is never touched; the base URL
     // points at an unreachable port but no request is actually dispatched.

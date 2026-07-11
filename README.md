@@ -43,6 +43,9 @@ Install-Package Visorcraft.MongrelDB
 
 The package has no runtime dependencies - only the .NET base class library.
 
+History retention: `GetHistoryRetentionAsync` and
+`SetHistoryRetentionEpochsAsync`.
+
 ## Requirements
 
 - **.NET 8.0 or newer**

@@ -6,6 +6,10 @@ using System.Text.Json.Serialization;
 
 namespace Visorcraft.MongrelDB;
 
+public sealed record HistoryRetention(
+    [property: JsonPropertyName("history_retention_epochs")] ulong HistoryRetentionEpochs,
+    [property: JsonPropertyName("earliest_retained_epoch")] ulong EarliestRetainedEpoch);
+
 /// <summary>
 /// The MongrelDB HTTP client. A pure managed .NET client for a running
 /// <c>mongreldb-server</c> daemon, built on <see cref="HttpClient"/> (.NET 8+).
@@ -211,6 +215,12 @@ public sealed class MongrelDBClient : IDisposable
     /// <returns>The assigned table id.</returns>
     public async Task<long> CreateTableAsync(string name, IList<Dictionary<string, object?>> columns, CancellationToken cancellationToken = default)
         => await CreateTableAsyncCore(name, columns, null, cancellationToken).ConfigureAwait(false);
+
+    public async Task<HistoryRetention> GetHistoryRetentionAsync(CancellationToken cancellationToken = default)
+        => Deserialize<HistoryRetention>(await GetAsync("/history/retention", cancellationToken).ConfigureAwait(false))!;
+
+    public async Task<HistoryRetention> SetHistoryRetentionEpochsAsync(ulong epochs, CancellationToken cancellationToken = default)
+        => Deserialize<HistoryRetention>(await PutAsync("/history/retention", new { history_retention_epochs = epochs }, cancellationToken).ConfigureAwait(false))!;
 
     /// <summary>Creates a table with the daemon's native constraints block.</summary>
     public async Task<long> CreateTableAsync(string name, IList<Dictionary<string, object?>> columns,
@@ -569,6 +579,9 @@ public sealed class MongrelDBClient : IDisposable
 
     internal Task<byte[]> PostAsync(string path, object? body, CancellationToken cancellationToken)
         => DoRequestAsync(HttpMethod.Post, path, body, cancellationToken);
+
+    internal Task<byte[]> PutAsync(string path, object? body, CancellationToken cancellationToken)
+        => DoRequestAsync(HttpMethod.Put, path, body, cancellationToken);
 
     internal Task<byte[]> DeletePathAsync(string path, CancellationToken cancellationToken)
         => DoRequestAsync(HttpMethod.Delete, path, body: null, cancellationToken);
