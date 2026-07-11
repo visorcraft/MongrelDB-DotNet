@@ -901,6 +901,9 @@ public sealed class MongrelDBClient : IDisposable
             };
         }
 
+        if (message.StartsWith("not found:", StringComparison.Ordinal))
+            return new NotFoundException(message, 404, code, opIndex);
+
         return status switch
         {
             401 or 403 => new AuthException(message!, status, code, opIndex),

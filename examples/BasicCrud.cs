@@ -49,7 +49,7 @@ var columns = new[]
     {
         ["id"] = 5L, ["name"] = "created_at", ["ty"] = "timestamp_nanos",
         ["primary_key"] = false, ["nullable"] = false,
-        ["default_value"] = "now",
+        ["default_expr"] = "now",
     },
 };
 var constraints = new Dictionary<string, object?>
