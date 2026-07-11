@@ -177,17 +177,15 @@ composition - live in a top-level `constraints` block on the same
       {
         "id": 1,
         "name": "email_format",
-        "expr": { "regex": { "col": 2, "pattern": "^[^@]+@[^@]+$", "negated": false, "case_insensitive": true } }
+        "expr": { "Regex": { "col": 2, "pattern": "^[^@]+@[^@]+$", "negated": false, "case_insensitive": true } }
       }
     ]
   }
 }
 ```
 
-The .NET client's typed `CreateTableAsync` does not yet expose a
-`constraints` parameter, so regex / range / FK CHECKs are wired through
-the engine's `/kit/create_table` payload by hand from callers that need
-them today.
+Pass this object as the third `CreateTableAsync` argument. Existing calls that
+pass a `CancellationToken` as argument three remain unchanged.
 
 ## Authentication
 
@@ -367,7 +365,7 @@ requests cooperatively.
 | `new MongrelDBClient(baseUrl, token, user, pass, http)` | With a custom `HttpClient` |
 | `HealthAsync()` | Check daemon health (returns `false` rather than throwing when unreachable) |
 | `GetTableNamesAsync()` | List table names |
-| `CreateTableAsync(name, columns)` | Create a table; returns the table id |
+| `CreateTableAsync(name, columns, constraints?)` | Create a table; returns the table id and forwards optional native constraints |
 | `DropTableAsync(name)` | Drop a table |
 | `CountAsync(table)` | Row count |
 | `PutAsync(table, cells, key?)` | Insert a row |

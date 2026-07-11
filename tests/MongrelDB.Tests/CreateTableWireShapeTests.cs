@@ -43,12 +43,16 @@ public class CreateTableWireShapeTests
         }
     }
 
-    private static string RunCreateTable(IList<Dictionary<string, object?>> columns, out CapturingHandler handler)
+    private static string RunCreateTable(IList<Dictionary<string, object?>> columns, out CapturingHandler handler,
+        IDictionary<string, object?>? constraints = null)
     {
         handler = new CapturingHandler();
         using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
         var client = new MongrelDBClient(null, token: null, username: null, password: null, http);
-        client.CreateTableAsync("wire_test", columns).GetAwaiter().GetResult();
+        if (constraints is null)
+            client.CreateTableAsync("wire_test", columns).GetAwaiter().GetResult();
+        else
+            client.CreateTableAsync("wire_test", columns, constraints).GetAwaiter().GetResult();
         return handler.CapturedBody ?? string.Empty;
     }
 
@@ -83,7 +87,25 @@ public class CreateTableWireShapeTests
                 ["default_value"] = "draft",
                 ["nullable"] = false,
             },
-        }, out _);
+        }, out _, new Dictionary<string, object?>
+        {
+            ["checks"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["id"] = 1,
+                    ["name"] = "status_known",
+                    ["expr"] = new Dictionary<string, object?>
+                    {
+                        ["Eq"] = new object[]
+                        {
+                            new Dictionary<string, object?> { ["Col"] = 2 },
+                            new Dictionary<string, object?> { ["Lit"] = new Dictionary<string, object?> { ["Bytes"] = "draft" } },
+                        },
+                    },
+                },
+            },
+        });
 
         Assert.False(string.IsNullOrEmpty(body));
         using JsonDocument doc = JsonDocument.Parse(body);
@@ -94,6 +116,8 @@ public class CreateTableWireShapeTests
         // Keys must appear with the exact names the engine reads on the wire.
         Assert.True(statusCol.TryGetProperty("enum_variants", out _), "expected enum_variants key on status column");
         Assert.True(statusCol.TryGetProperty("default_value", out _), "expected default_value key on status column");
+        Assert.Equal("status_known", doc.RootElement.GetProperty("constraints")
+            .GetProperty("checks")[0].GetProperty("name").GetString());
     }
 
     [Fact]

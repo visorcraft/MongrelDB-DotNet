@@ -33,7 +33,7 @@ Console.WriteLine("Connected to MongrelDB");
 // 2. Create the table. Schema: id (int64 PK), name (varchar), score (float64),
 //    status (enum, with enum_variants + default_value), created_at (timestamp,
 //    default_value = "now"). The engine fills the two new columns on insert.
-long tableId = await db.CreateTableAsync(table, new[]
+var columns = new[]
 {
     Column(1, "id", "int64", primaryKey: true),
     Column(2, "name", "varchar", primaryKey: false),
@@ -51,7 +51,27 @@ long tableId = await db.CreateTableAsync(table, new[]
         ["primary_key"] = false, ["nullable"] = false,
         ["default_value"] = "now",
     },
-});
+};
+var constraints = new Dictionary<string, object?>
+{
+    ["checks"] = new object[]
+    {
+        new Dictionary<string, object?>
+        {
+            ["id"] = 1,
+            ["name"] = "amount_nonneg",
+            ["expr"] = new Dictionary<string, object?>
+            {
+                ["Ge"] = new object[]
+                {
+                    new Dictionary<string, object?> { ["Col"] = 3 },
+                    new Dictionary<string, object?> { ["Lit"] = new Dictionary<string, object?> { ["Float64"] = 0.0 } },
+                },
+            },
+        },
+    },
+};
+long tableId = await db.CreateTableAsync(table, columns, constraints);
 created = true;
 Console.WriteLine($"Created table {table} (id {tableId})");
 

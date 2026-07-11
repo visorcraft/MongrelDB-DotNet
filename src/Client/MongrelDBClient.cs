@@ -210,6 +210,15 @@ public sealed class MongrelDBClient : IDisposable
     /// <param name="cancellationToken">A token to cancel the request.</param>
     /// <returns>The assigned table id.</returns>
     public async Task<long> CreateTableAsync(string name, IList<Dictionary<string, object?>> columns, CancellationToken cancellationToken = default)
+        => await CreateTableAsyncCore(name, columns, null, cancellationToken).ConfigureAwait(false);
+
+    /// <summary>Creates a table with the daemon's native constraints block.</summary>
+    public async Task<long> CreateTableAsync(string name, IList<Dictionary<string, object?>> columns,
+        IDictionary<string, object?> constraints, CancellationToken cancellationToken = default)
+        => await CreateTableAsyncCore(name, columns, constraints, cancellationToken).ConfigureAwait(false);
+
+    private async Task<long> CreateTableAsyncCore(string name, IList<Dictionary<string, object?>> columns,
+        IDictionary<string, object?>? constraints, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(columns);
@@ -219,6 +228,8 @@ public sealed class MongrelDBClient : IDisposable
             ["name"] = name,
             ["columns"] = columns,
         };
+        if (constraints is not null)
+            payload["constraints"] = constraints;
         byte[] body = await PostAsync("/kit/create_table", payload, cancellationToken).ConfigureAwait(false);
 
         var resp = Deserialize<CreateTableResponse>(body);
