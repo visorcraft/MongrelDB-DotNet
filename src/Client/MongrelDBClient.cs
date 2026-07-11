@@ -207,7 +207,9 @@ public sealed class MongrelDBClient : IDisposable
     /// <remarks>
     /// Each column is a <see cref="Dictionary{TKey, TValue}"/> sent verbatim to
     /// the daemon. Recognized keys are <c>id</c>, <c>name</c>, <c>ty</c>,
-    /// <c>primary_key</c>, and <c>nullable</c>.
+    /// <c>primary_key</c>, <c>nullable</c>, <c>enum_variants</c>,
+    /// <c>default_value</c> (static JSON scalar: string, number, bool, or null),
+    /// and <c>default_expr</c> (dynamic <c>"now"</c> or <c>"uuid"</c>).
     /// </remarks>
     /// <param name="name">The table name.</param>
     /// <param name="columns">The column descriptors.</param>

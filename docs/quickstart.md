@@ -204,6 +204,13 @@ await db.CreateTableAsync("users", new[]
         ["primary_key"] = false, ["nullable"] = false,
         ["default_expr"] = "now",
     },
+    // UUID column with a dynamic "uuid" default.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 7L, ["name"] = "uuid_col", ["ty"] = "uuid",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["default_expr"] = "uuid",
+    },
 });
 ```
 
@@ -226,7 +233,7 @@ section.
 | `await q.ExecuteAsync()` | Sends the query and decodes the `rows` list. |
 | `await db.CountAsync(table)` | GET `/tables/{name}/count`. |
 
-## 6. Common pitfalls
+## 7. Common pitfalls
 
 **Using the column name instead of the column id.** Every on-wire API uses
 the numeric `id` from `CreateTableAsync`, never the `name`. The query
@@ -274,7 +281,7 @@ success is the signal; use the native query builder for typed row retrieval.
 you construct the client with a token or Basic credentials. See
 [auth.md](auth.md).
 
-## 7. History retention
+## 8. History retention
 
 Administrators can inspect and adjust how many committed epochs the engine
 retains for historical (`AS OF EPOCH`) reads. The daemon defaults to 1024

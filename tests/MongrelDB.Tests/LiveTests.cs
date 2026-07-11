@@ -160,7 +160,7 @@ public class LiveTests : IAsyncLifetime
         Assert.Equal(1000UL, retention.HistoryRetentionEpochs);
 
         // Read it back through the typed API and the individual getters.
-        Assert.Equal(1000UL, await _db.HistoryRetentionEpochsAsync());
+        Assert.Equal(1000UL, await _db!.HistoryRetentionEpochsAsync());
         ulong earliestBefore = await _db.EarliestRetainedEpochAsync();
 
         // Capture the current visible epoch before writing.
@@ -184,6 +184,8 @@ public class LiveTests : IAsyncLifetime
         Assert.Equal(50L, CellJsonLong(rows[0], "amount"));
 
         // Shrinking the window and re-expanding it cannot restore already-pruned history.
+        // The engine may retain more than requested, so we only assert monotonicity:
+        // re-expanding cannot move earliest_retained_epoch backward.
         await _db.SetHistoryRetentionEpochsAsync(1);
         ulong earliestAfterShrink = await _db.EarliestRetainedEpochAsync();
         await _db.SetHistoryRetentionEpochsAsync(1000);

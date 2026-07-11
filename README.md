@@ -173,6 +173,13 @@ await db.CreateTableAsync("orders", new[]
         ["primary_key"] = false, ["nullable"] = false,
         ["default_expr"] = "now",
     },
+    // UUID column with a dynamic "uuid" default.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 7L, ["name"] = "uuid_col", ["ty"] = "uuid",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["default_expr"] = "uuid",
+    },
 });
 ```
 

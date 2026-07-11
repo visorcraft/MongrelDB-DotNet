@@ -237,6 +237,7 @@ public class CreateTableWireShapeTests
         HistoryRetention retention = client.SetHistoryRetentionEpochsAsync(100).GetAwaiter().GetResult();
 
         Assert.Equal(100UL, retention.HistoryRetentionEpochs);
+        Assert.Equal(1UL, retention.EarliestRetainedEpoch);
         Assert.NotNull(handler.CapturedRequest);
         Assert.Equal(HttpMethod.Put, handler.CapturedRequest!.Method);
         Assert.NotNull(handler.CapturedUri);
@@ -300,6 +301,20 @@ public class CreateTableWireShapeTests
 
         QueryException ex = Assert.Throws<QueryException>(() =>
             client.SetHistoryRetentionEpochsAsync(100).GetAwaiter().GetResult());
+        Assert.Equal(503, ex.Status);
+    }
+
+    [Fact]
+    public void GetHistoryRetentionAsync_Propagates_Non2xx_Response()
+    {
+        var handler = new CapturingHandler();
+        handler.SetErrorResponse(HttpStatusCode.ServiceUnavailable,
+            "{\"error\":{\"message\":\"unavailable\",\"code\":\"STORAGE_ERROR\"}}");
+        using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        var client = new MongrelDBClient(null, token: null, username: null, password: null, http);
+
+        QueryException ex = Assert.Throws<QueryException>(() =>
+            client.GetHistoryRetentionAsync().GetAwaiter().GetResult());
         Assert.Equal(503, ex.Status);
     }
 }
