@@ -219,6 +219,12 @@ public sealed class MongrelDBClient : IDisposable
     public async Task<HistoryRetention> GetHistoryRetentionAsync(CancellationToken cancellationToken = default)
         => Deserialize<HistoryRetention>(await GetAsync("/history/retention", cancellationToken).ConfigureAwait(false))!;
 
+    public async Task<ulong> HistoryRetentionEpochsAsync(CancellationToken cancellationToken = default)
+        => (await GetHistoryRetentionAsync(cancellationToken).ConfigureAwait(false)).HistoryRetentionEpochs;
+
+    public async Task<ulong> EarliestRetainedEpochAsync(CancellationToken cancellationToken = default)
+        => (await GetHistoryRetentionAsync(cancellationToken).ConfigureAwait(false)).EarliestRetainedEpoch;
+
     public async Task<HistoryRetention> SetHistoryRetentionEpochsAsync(ulong epochs, CancellationToken cancellationToken = default)
         => Deserialize<HistoryRetention>(await PutAsync("/history/retention", new { history_retention_epochs = epochs }, cancellationToken).ConfigureAwait(false))!;
 

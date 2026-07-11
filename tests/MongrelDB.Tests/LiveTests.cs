@@ -159,9 +159,9 @@ public class LiveTests : IAsyncLifetime
         HistoryRetention retention = await _db!.SetHistoryRetentionEpochsAsync(1000);
         Assert.Equal(1000UL, retention.HistoryRetentionEpochs);
 
-        // Read it back through the typed API.
-        HistoryRetention readBack = await _db.GetHistoryRetentionAsync();
-        Assert.Equal(1000UL, readBack.HistoryRetentionEpochs);
+        // Read it back through the typed API and the individual getters.
+        Assert.Equal(1000UL, await _db.HistoryRetentionEpochsAsync());
+        ulong earliestBefore = await _db.EarliestRetainedEpochAsync();
 
         // Capture the current visible epoch before writing.
         long epochBefore = await ReadCurrentEpochAsync();
@@ -182,6 +182,13 @@ public class LiveTests : IAsyncLifetime
             $"SELECT amount FROM {name} AS OF EPOCH {insertEpoch} WHERE id = 1");
         Assert.Single(rows);
         Assert.Equal(50L, CellJsonLong(rows[0], "amount"));
+
+        // Shrinking the window and re-expanding it cannot restore already-pruned history.
+        await _db.SetHistoryRetentionEpochsAsync(1);
+        ulong earliestAfterShrink = await _db.EarliestRetainedEpochAsync();
+        await _db.SetHistoryRetentionEpochsAsync(1000);
+        Assert.Equal(earliestAfterShrink, await _db.EarliestRetainedEpochAsync());
+        Assert.True(earliestAfterShrink >= earliestBefore, "earliest retained epoch must not move backward");
     }
 
     [SkippableFact]

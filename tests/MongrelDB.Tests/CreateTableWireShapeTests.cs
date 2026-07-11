@@ -29,11 +29,20 @@ public class CreateTableWireShapeTests
 
         private string _responseBody = "{\"table_id\":7}";
         private string _responseContentType = "application/json";
+        private HttpStatusCode _statusCode = HttpStatusCode.OK;
 
         public void SetResponse(string body, string contentType = "application/json")
         {
             _responseBody = body;
             _responseContentType = contentType;
+            _statusCode = HttpStatusCode.OK;
+        }
+
+        public void SetErrorResponse(HttpStatusCode status, string body)
+        {
+            _statusCode = status;
+            _responseBody = body;
+            _responseContentType = "application/json";
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -49,7 +58,7 @@ public class CreateTableWireShapeTests
             {
                 CapturedBody = null;
             }
-            return new HttpResponseMessage(HttpStatusCode.OK)
+            return new HttpResponseMessage(_statusCode)
             {
                 Content = new StringContent(_responseBody, Encoding.UTF8, _responseContentType),
             };
@@ -97,6 +106,8 @@ public class CreateTableWireShapeTests
             new() { ["id"] = 5, ["name"] = "null_default", ["ty"] = "varchar", ["nullable"] = false, ["default_value"] = null },
             new() { ["id"] = 6, ["name"] = "now_literal", ["ty"] = "varchar", ["nullable"] = false, ["default_value"] = "now" },
             new() { ["id"] = 7, ["name"] = "now_expr", ["ty"] = "timestamp_nanos", ["nullable"] = false, ["default_expr"] = "now" },
+            new() { ["id"] = 8, ["name"] = "uuid_literal", ["ty"] = "varchar", ["nullable"] = false, ["default_value"] = "uuid" },
+            new() { ["id"] = 9, ["name"] = "uuid_expr", ["ty"] = "uuid", ["nullable"] = false, ["default_expr"] = "uuid" },
         }, out _);
 
         Assert.False(string.IsNullOrEmpty(body));
@@ -133,6 +144,16 @@ public class CreateTableWireShapeTests
         JsonElement nowExprCol = Column("now_expr");
         Assert.False(nowExprCol.TryGetProperty("default_value", out _), "default_expr column must not also send default_value");
         Assert.Equal("now", nowExprCol.GetProperty("default_expr").GetString());
+
+        // Literal "uuid" in default_value is still just a string; it is NOT dynamic.
+        JsonElement uuidLiteralCol = Column("uuid_literal");
+        Assert.Equal(JsonValueKind.String, uuidLiteralCol.GetProperty("default_value").ValueKind);
+        Assert.Equal("uuid", uuidLiteralCol.GetProperty("default_value").GetString());
+
+        // Dynamic uuid default lives in default_expr and must not also emit default_value.
+        JsonElement uuidExprCol = Column("uuid_expr");
+        Assert.False(uuidExprCol.TryGetProperty("default_value", out _), "default_expr column must not also send default_value");
+        Assert.Equal("uuid", uuidExprCol.GetProperty("default_expr").GetString());
     }
 
     [Fact]
@@ -224,7 +245,7 @@ public class CreateTableWireShapeTests
     }
 
     [Fact]
-    public void GetHistoryRetentionAsync_Decodes_Response_Fields()
+    public void GetHistoryRetentionAsync_Uses_Get_Path_And_Decodes_Response_Fields()
     {
         var handler = new CapturingHandler();
         handler.SetResponse("{\"history_retention_epochs\":100,\"earliest_retained_epoch\":42}");
@@ -235,5 +256,50 @@ public class CreateTableWireShapeTests
 
         Assert.Equal(100UL, retention.HistoryRetentionEpochs);
         Assert.Equal(42UL, retention.EarliestRetainedEpoch);
+        Assert.NotNull(handler.CapturedRequest);
+        Assert.Equal(HttpMethod.Get, handler.CapturedRequest!.Method);
+        Assert.Equal("/history/retention", handler.CapturedUri!.AbsolutePath);
+    }
+
+    [Fact]
+    public void HistoryRetentionEpochsAsync_Returns_Single_Field()
+    {
+        var handler = new CapturingHandler();
+        handler.SetResponse("{\"history_retention_epochs\":100,\"earliest_retained_epoch\":42}");
+        using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        var client = new MongrelDBClient(null, token: null, username: null, password: null, http);
+
+        ulong epochs = client.HistoryRetentionEpochsAsync().GetAwaiter().GetResult();
+        Assert.Equal(100UL, epochs);
+        Assert.Equal(HttpMethod.Get, handler.CapturedRequest!.Method);
+        Assert.Equal("/history/retention", handler.CapturedUri!.AbsolutePath);
+    }
+
+    [Fact]
+    public void EarliestRetainedEpochAsync_Returns_Single_Field()
+    {
+        var handler = new CapturingHandler();
+        handler.SetResponse("{\"history_retention_epochs\":100,\"earliest_retained_epoch\":42}");
+        using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        var client = new MongrelDBClient(null, token: null, username: null, password: null, http);
+
+        ulong earliest = client.EarliestRetainedEpochAsync().GetAwaiter().GetResult();
+        Assert.Equal(42UL, earliest);
+        Assert.Equal(HttpMethod.Get, handler.CapturedRequest!.Method);
+        Assert.Equal("/history/retention", handler.CapturedUri!.AbsolutePath);
+    }
+
+    [Fact]
+    public void SetHistoryRetentionEpochsAsync_Propagates_Non2xx_Response()
+    {
+        var handler = new CapturingHandler();
+        handler.SetErrorResponse(HttpStatusCode.ServiceUnavailable,
+            "{\"error\":{\"message\":\"unavailable\",\"code\":\"STORAGE_ERROR\"}}");
+        using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        var client = new MongrelDBClient(null, token: null, username: null, password: null, http);
+
+        QueryException ex = Assert.Throws<QueryException>(() =>
+            client.SetHistoryRetentionEpochsAsync(100).GetAwaiter().GetResult());
+        Assert.Equal(503, ex.Status);
     }
 }

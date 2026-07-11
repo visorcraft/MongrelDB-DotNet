@@ -340,13 +340,17 @@ retained epochs.
 
 ```csharp
 HistoryRetention current = await db.GetHistoryRetentionAsync();
+ulong epochs = await db.HistoryRetentionEpochsAsync();
+ulong earliest = await db.EarliestRetainedEpochAsync();
 await db.SetHistoryRetentionEpochsAsync(1000);
 ```
 
-Both methods return a `HistoryRetention` record with `HistoryRetentionEpochs`
-and `EarliestRetainedEpoch`. The routes require `ADMIN` permission when catalog
-authentication is enabled. Increasing the retention window **cannot restore
-history that was already pruned**.
+`GetHistoryRetentionAsync` returns a `HistoryRetention` record with
+`HistoryRetentionEpochs` and `EarliestRetainedEpoch`. The individual getters
+`HistoryRetentionEpochsAsync` and `EarliestRetainedEpochAsync` return a single
+`ulong`. All three routes require `ADMIN` permission when catalog authentication
+is enabled. Increasing the retention window **cannot restore history that was
+already pruned**.
 
 ## Error handling
 
@@ -417,6 +421,8 @@ requests cooperatively.
 | `CompactAsync()` | Compact all tables |
 | `CompactTableAsync(table)` | Compact one table |
 | `GetHistoryRetentionAsync()` | Read the retained epoch window |
+| `HistoryRetentionEpochsAsync()` | Read `history_retention_epochs` as `ulong` |
+| `EarliestRetainedEpochAsync()` | Read `earliest_retained_epoch` as `ulong` |
 | `SetHistoryRetentionEpochsAsync(epochs)` | Set the retained epoch window (requires admin) |
 | `BeginTransaction()` | Start a batch |
 
