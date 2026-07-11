@@ -498,6 +498,46 @@ curl -fsSL -o bin/mongreldb-server \
 chmod +x bin/mongreldb-server
 ```
 
+## Native embedding (Tier 1)
+
+For in-process access with zero serialization overhead, install the
+**`Visorcraft.MongrelDB.Native`** package alongside the HTTP client. It
+bundles prebuilt `libmongreldb` + `libmongreldb_kit` under
+`runtimes/<rid>/native/` and exposes the engine via P/Invoke:
+
+```sh
+dotnet add package Visorcraft.MongrelDB.Native
+```
+
+```csharp
+using Visorcraft.MongrelDB.Native;
+
+// Create an embedded database (no daemon needed).
+using var db = MongrelDBNative.Create("/path/to/dbdir", schemaJson);
+
+// SQL, migrations, and the query builder all work in-process.
+db.SqlRows("INSERT INTO users (id, name) VALUES (1, 'alice')");
+var rows = db.SqlRows("SELECT id, name FROM users");
+
+// Arrow IPC for high-performance columnar reads.
+byte[] arrow = db.SqlArrow("SELECT * FROM users");
+
+// Migrations via the Kit runner.
+db.Migrate(migrationsJson);
+
+// Query builder.
+var matches = db.QuerySelect(/* Select AST JSON */);
+```
+
+The native libraries are resolved in this order:
+1. `MONGRELDB_NATIVE_DIR` env var (point at a directory with the `.so`/`.dylib`/`.dll`)
+2. `runtimes/<rid>/native/` alongside the application (NuGet auto-layout)
+3. System search path (`LD_LIBRARY_PATH`, `DYLD_LIBRARY_PATH`, `PATH`)
+
+The HTTP client (`Visorcraft.MongrelDB`) stays dependency-free. Use the
+native package when you want the "better-sqlite3" embedded experience, or
+the HTTP client when you need to connect to a shared daemon.
+
 ## Contributing
 
 Contributions are welcome. Please:

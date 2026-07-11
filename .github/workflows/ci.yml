@@ -118,3 +118,43 @@ jobs:
           if [ -f /tmp/mongreldb-server.pid ]; then
             kill "$(cat /tmp/mongreldb-server.pid)" 2>/dev/null || true
           fi
+
+  native:
+    # Builds the native P/Invoke project and runs its tests against the
+    # prebuilt libmongreldb + libmongreldb_kit from the engine releases.
+    name: Native embedding tests
+    runs-on: ubuntu-latest
+    env:
+      SERVER_VERSION: '0.48.0'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      # Download the prebuilt native libraries for linux-x64 and place them
+      # under the runtimes/linux-x64/native/ directory so the .NET runtime
+      # loader finds them automatically.
+      - name: Download native libraries
+        run: |
+          mkdir -p runtimes/linux-x64/native
+          curl -fsSL -o /tmp/core.tar.gz \
+            "https://github.com/visorcraft/MongrelDB/releases/download/v${SERVER_VERSION}/mongreldb-native-linux-x64-gnu.tar.gz"
+          tar xzf /tmp/core.tar.gz -C /tmp --strip-components=1
+          cp /tmp/lib/libmongreldb.so runtimes/linux-x64/native/
+
+          curl -fsSL -o /tmp/kit.tar.gz \
+            "https://github.com/visorcraft/MongrelDB/releases/download/v${SERVER_VERSION}/mongreldb-kit-native-linux-x64-gnu.tar.gz"
+          tar xzf /tmp/kit.tar.gz -C /tmp/kit --strip-components=1
+          cp /tmp/kit/lib/libmongreldb_kit.so runtimes/linux-x64/native/
+
+      - name: Build
+        run: dotnet build MongrelDB.Native.csproj --configuration Release
+
+      - name: Run native tests
+        run: dotnet test tests/MongrelDB.Native.Tests/MongrelDB.Native.Tests.csproj --configuration Release --no-build --logger "console;verbosity=normal"
+        env:
+          MONGRELDB_NATIVE_DIR: ${{ github.workspace }}/runtimes/linux-x64/native

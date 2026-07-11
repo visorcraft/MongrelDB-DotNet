@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Package identity -->
+    <PackageId>Visorcraft.MongrelDB.Native</PackageId>
+    <Title>MongrelDB .NET Native (Embedded)</Title>
+    <Description>In-process native bindings for MongrelDB. Run the columnar engine directly in your .NET application via P/Invoke - no daemon, zero serialization overhead. SQL, migrations, and the query builder are all available through the C ABI. Install alongside Visorcraft.MongrelDB (HTTP client) and choose the transport that fits your workload.</Description>
+    <Authors>Visorcraft</Authors>
+    <Owners>Visorcraft</Owners>
+    <Copyright>Copyright (c) 2026 Visorcraft</Copyright>
+
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+
+    <PackageProjectUrl>https://github.com/visorcraft/MongrelDB-DotNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/visorcraft/MongrelDB-DotNet.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>mongreldb;database;native;embedded;pinvoke;ffi;visorcraft;dotnet</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NeutralLanguage>en</NeutralLanguage>
+
+    <!-- The native libraries live under runtimes/<rid>/native/ and are
+         resolved by the .NET runtime loader automatically. -->
+  </PropertyGroup>
+
+  <!-- Reference the base package to share the exception hierarchy, Cells,
+       and other types. -->
+  <ItemGroup>
+    <ProjectReference Include="..\MongrelDB.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="src\Native\**\*.cs" />
+  </ItemGroup>
+
+  <!-- Exclude the HTTP client sources (they belong to the base project). -->
+  <ItemGroup>
+    <Compile Remove="src\Client\**\*" />
+    <Compile Remove="tests\**\*" />
+    <Compile Remove="examples\**\*" />
+  </ItemGroup>
+
+  <!-- Native libraries: the build/targets file (downloaded at build time by CI
+       into runtimes/<rid>/native/) ships in the NuGet package so consumers
+       get them automatically. -->
+  <ItemGroup>
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="build\**\*" Pack="true" PackagePath="build\" />
+    <None Include="runtimes\**\*" Pack="true" PackagePath="runtimes\" />
+  </ItemGroup>
+
+</Project>

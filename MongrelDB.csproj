@@ -32,6 +32,12 @@
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
+  <!-- The native package (Visorcraft.MongrelDB.Native) needs access to the
+       internal exception constructors so it can raise the same typed errors. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="MongrelDB.Native" />
+  </ItemGroup>
+
   <!-- No external NuGet dependencies: this library targets only the
        System.Net.Http / System.Text.Json / System.Text.RegularExpressions
        surface that ships in the net8.0 base class library. -->
@@ -46,6 +52,8 @@
          compiling them into the library trips CS8802 "Only one compilation
          unit can have top-level statements". Exclude them from the build. -->
     <Compile Remove="examples\**" />
+    <!-- The native P/Invoke sources belong to MongrelDB.Native.csproj, not here. -->
+    <Compile Remove="src\Native\**" />
   </ItemGroup>
 
   <ItemGroup>

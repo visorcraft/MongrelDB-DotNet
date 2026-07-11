@@ -73,7 +73,10 @@ Live tests self-skip when no server is reachable.
   JSON keys. Daemon-dependent coverage: a live test that skips cleanly
   when no server is available.
 - The change keeps this repo a thin client over `mongreldb-server`. Don't
-  re-implement storage, indexing, WAL, or SQL planning logic here.
+  re-implement storage, indexing, WAL, or SQL planning logic here. The
+  `MongrelDB.Native` project is the exception: it wraps the prebuilt
+  `libmongreldb` + `libmongreldb_kit` via P/Invoke for embedded use, but
+  must not duplicate engine logic - it delegates to the native libs.
 - Documentation is updated alongside the code (`docs/`, `README.md`) if the
   change affects users.
 - Commits have clear messages (see below).
@@ -86,6 +89,9 @@ Live tests self-skip when no server is reachable.
 - **Dependencies.** No runtime dependencies beyond the .NET base class
   library (`System.Net.Http.HttpClient`, `System.Text.Json`). New
   dependencies must be MIT or Apache-2.0 licensed and justified.
+  The `MongrelDB.Native` project bundles prebuilt native libraries
+  (`libmongreldb`, `libmongreldb_kit`) but has no managed-code dependencies
+  beyond `MongrelDB` itself.
 - **Errors.** Throw a typed exception hierarchy (`MongrelDBException` base,
   `AuthException`, `NotFoundException`, `ConflictException`,
   `QueryException`) carrying the HTTP status and decoded server envelope,

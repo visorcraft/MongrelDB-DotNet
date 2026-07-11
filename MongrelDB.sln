@@ -9,6 +9,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{AD9C21ED
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongrelDB.Tests", "tests\MongrelDB.Tests\MongrelDB.Tests.csproj", "{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongrelDB.Native", "MongrelDB.Native.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongrelDB.Native.Tests", "tests\MongrelDB.Native.Tests\MongrelDB.Native.Tests.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F23456789012}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,8 +30,17 @@ Global
 		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5ED54DF0-5EDB-4221-8152-8B3B7A6408CD} = {AD9C21ED-EF8B-4435-9173-CB7BD8CC2312}
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012} = {AD9C21ED-EF8B-4435-9173-CB7BD8CC2312}
 	EndGlobalSection
 EndGlobal
