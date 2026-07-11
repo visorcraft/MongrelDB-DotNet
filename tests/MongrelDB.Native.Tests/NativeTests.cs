@@ -1,6 +1,7 @@
 using Xunit;
 using Xunit.Sdk;
 using System.Runtime.InteropServices;
+using Visorcraft.MongrelDB;
 using Visorcraft.MongrelDB.Native;
 
 namespace MongrelDB.Native.Tests;
@@ -33,10 +34,12 @@ public class NativeTests
 		try
 		{
 			NativeLibraryLoader.EnsureInitialized();
-			// Try to resolve the Kit library (the main dependency).
-			return NativeLibrary.TryLoad("mongreldb_kit", typeof(MongrelDBKitInterop).Assembly, null, out _);
+			// Probe by calling a lightweight Kit FFI function. If the native
+			// lib can't be loaded, this throws DllNotFoundException.
+			MongrelDBKitInterop.mongreldb_kit_last_error_code();
+			return true;
 		}
-		catch
+		catch (Exception)
 		{
 			return false;
 		}
@@ -45,7 +48,7 @@ public class NativeTests
 	private static void RequireNative()
 	{
 		if (!NativeLibAvailable())
-			throw new SkipException("native library (libmongreldb_kit) not available");
+			throw new Xunit.SkipException("native library (libmongreldb_kit) not available");
 	}
 
 	private static string MakeTempDir()
@@ -68,7 +71,7 @@ public class NativeTests
 		}
 		catch
 		{
-			throw new SkipException("native library not available");
+			throw new Xunit.SkipException("native library not available");
 		}
 
 		var checksum = MongrelDBNative.MigrationChecksum(
@@ -88,7 +91,7 @@ public class NativeTests
 		}
 		catch
 		{
-			throw new SkipException("native library not available");
+			throw new Xunit.SkipException("native library not available");
 		}
 
 		var applied = "[]";
@@ -122,7 +125,9 @@ public class NativeTests
 			// SELECT via SQL.
 			var rows = db.SqlRows("SELECT id, name FROM users");
 			Assert.Single(rows);
-			Assert.Equal(1L, rows[0]["id"]);
+			var idVal = rows[0]["id"];
+			Assert.NotNull(idVal);
+			Assert.Equal(1L, Convert.ToInt64(idVal));
 			Assert.Equal("alice", rows[0]["name"]);
 		}
 		finally

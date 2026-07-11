@@ -22,6 +22,8 @@
     <PackageTags>mongreldb;database;native;embedded;pinvoke;ffi;visorcraft;dotnet</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
 
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
@@ -32,17 +34,20 @@
          resolved by the .NET runtime loader automatically. -->
   </PropertyGroup>
 
+  <!-- Allow the test project to access internal helpers like NativeLibraryLoader. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="MongrelDB.Native.Tests" />
+  </ItemGroup>
+
   <!-- Reference the base package to share the exception hierarchy, Cells,
-       and other types. -->
+       and other types. Both csproj files are at the repo root. -->
   <ItemGroup>
-    <ProjectReference Include="..\MongrelDB.csproj" />
+    <ProjectReference Include="MongrelDB.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="src\Native\**\*.cs" />
-  </ItemGroup>
-
-  <!-- Exclude the HTTP client sources (they belong to the base project). -->
+  <!-- The SDK globs **/*.cs by default. Exclude the HTTP client sources
+       (they belong to the base project), tests, and examples so only
+       src/Native/*.cs is compiled into this assembly. -->
   <ItemGroup>
     <Compile Remove="src\Client\**\*" />
     <Compile Remove="tests\**\*" />

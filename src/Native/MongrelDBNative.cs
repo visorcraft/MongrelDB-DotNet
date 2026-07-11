@@ -50,7 +50,15 @@ public sealed class MongrelDBNative : IDisposable
 		var handle = MongrelDBKitInterop.mongreldb_kit_create(path, schemaJson);
 		if (handle == IntPtr.Zero)
 			throw new QueryException(LastKitError(), -1, null, null);
-		return new MongrelDBNative { _handle = handle };
+		return new MongrelDBNative(handle);
+	}
+
+	/// <summary>
+	/// Internal constructor from an existing handle.
+	/// </summary>
+	private MongrelDBNative(IntPtr handle)
+	{
+		_handle = handle;
 	}
 
 	// ── SQL ──────────────────────────────────────────────────────────────

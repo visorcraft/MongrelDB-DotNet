@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Visorcraft.MongrelDB.Native;
@@ -20,19 +21,31 @@ internal static class NativeLibraryLoader
 		if (Interlocked.Exchange(ref _initialized, 1) != 0)
 			return;
 
-		NativeLibrary.SetDllImportResolver(typeof(MongrelDBInterop).Module, ResolveLibrary);
-		NativeLibrary.SetDllImportResolver(typeof(MongrelDBKitInterop).Module, ResolveLibrary);
+		// Both interop classes are in the same assembly. SetDllImportResolver
+		// can only be called once per assembly, so we register a single
+		// resolver that handles both library names.
+		var asm = typeof(MongrelDBInterop).Assembly;
+		try
+		{
+			NativeLibrary.SetDllImportResolver(asm, ResolveLibrary);
+		}
+		catch (InvalidOperationException)
+		{
+			// Already registered (e.g. by a previous call from the same assembly).
+		}
 	}
 
 	private static IntPtr ResolveLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
 	{
+		IntPtr h;
+
 		// 1. MONGRELDB_NATIVE_DIR env var (user-supplied path to the .so/.dylib/.dll)
 		var envDir = Environment.GetEnvironmentVariable("MONGRELDB_NATIVE_DIR");
 		if (!string.IsNullOrEmpty(envDir))
 		{
 			var path = Path.Combine(envDir, FileName(libraryName));
-			if (NativeLibrary.TryLoad(path, out var handle))
-				return handle;
+			if (NativeLibrary.TryLoad(path, out h))
+				return h;
 		}
 
 		// 2. runtimes/<rid>/native/ alongside the assembly (NuGet package layout)
@@ -41,13 +54,13 @@ internal static class NativeLibraryLoader
 		{
 			var baseDir = AppContext.BaseDirectory;
 			var runtimePath = Path.Combine(baseDir, "runtimes", rid, "native", FileName(libraryName));
-			if (NativeLibrary.TryLoad(runtimePath, out var handle))
-				return handle;
+			if (NativeLibrary.TryLoad(runtimePath, out h))
+				return h;
 		}
 
 		// 3. Default system search path (LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, PATH)
-		if (NativeLibrary.TryLoad(libraryName, assembly, searchPath, out var handle))
-			return handle;
+		if (NativeLibrary.TryLoad(libraryName, assembly, searchPath, out h))
+			return h;
 
 		return IntPtr.Zero;
 	}
