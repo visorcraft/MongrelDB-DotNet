@@ -151,6 +151,40 @@ public class LiveTests : IAsyncLifetime
     }
 
     [SkippableFact]
+    public async Task HistoryRetention_Window_Survives_After_Update()
+    {
+        RequireDaemon();
+
+        // Set a 1000-epoch retention window before any history-dependent writes.
+        HistoryRetention retention = await _db!.SetHistoryRetentionEpochsAsync(1000);
+        Assert.Equal(1000UL, retention.HistoryRetentionEpochs);
+
+        // Read it back through the typed API.
+        HistoryRetention readBack = await _db.GetHistoryRetentionAsync();
+        Assert.Equal(1000UL, readBack.HistoryRetentionEpochs);
+
+        // Capture the current visible epoch before writing.
+        long epochBefore = await ReadCurrentEpochAsync();
+
+        string name = UniqueTable("dotnet_retention");
+        await FreshTableAsync(name, IntCol(1, "id", true), IntCol(2, "amount", false));
+
+        // Insert a row. Each commit advances the visible epoch.
+        await _db.PutAsync(name, Cells.Of(1, 1L, 2, 50L));
+        long insertEpoch = await ReadCurrentEpochAsync();
+        Assert.True(insertEpoch > epochBefore, "insert should advance the epoch");
+
+        // Update the same row so the current value differs from the insert-time value.
+        await _db.PutAsync(name, Cells.Of(1, 1L, 2, 999L));
+
+        // The pre-update value must still be readable at the insert epoch.
+        List<Dictionary<string, object?>> rows = await _db.SqlAsync(
+            $"SELECT amount FROM {name} AS OF EPOCH {insertEpoch} WHERE id = 1");
+        Assert.Single(rows);
+        Assert.Equal(50L, CellJsonLong(rows[0], "amount"));
+    }
+
+    [SkippableFact]
     public async Task CreateTableAndCountRoundTrip()
     {
         RequireDaemon();
@@ -495,6 +529,16 @@ public class LiveTests : IAsyncLifetime
         try { await _db!.DropTableAsync(name); }
         catch (MongrelDBException) { /* expected when the table doesn't exist yet */ }
         await _db!.CreateTableAsync(name, columns);
+    }
+
+    /// <summary>
+    /// Reads the current visible database epoch via <c>PRAGMA data_version</c>.
+    /// </summary>
+    private async Task<long> ReadCurrentEpochAsync()
+    {
+        List<Dictionary<string, object?>> rows = await _db!.SqlAsync("PRAGMA data_version");
+        Assert.Single(rows);
+        return CellJsonLong(rows[0], "data_version");
     }
 
     private static string UniqueTable(string prefix) => prefix + "_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString("x");

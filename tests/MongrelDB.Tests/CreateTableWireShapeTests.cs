@@ -7,28 +7,17 @@ using Xunit;
 namespace MongrelDB.Tests;
 
 /// <summary>
-/// Offline wire-shape conformance tests for <see cref="MongrelDBClient.CreateTableAsync"/>.
+/// Offline wire-shape conformance tests for <see cref="MongrelDBClient.CreateTableAsync"/>
+/// and related admin endpoints.
 ///
 /// These tests do NOT touch the network. They inject an <see cref="HttpMessageHandler"/>
 /// stub that captures the outgoing request body and returns a canned 200 response,
-/// then assert that the <c>enum_variants</c> and <c>default_value</c> column keys
-/// survive the JSON round-trip verbatim. This guards against silent key renames or
-/// omissions that would break the wire contract with the daemon (the engine reads
-/// both keys directly out of the column hash).
+/// then assert that the on-wire JSON keys and types survive the round-trip verbatim.
+/// This guards against silent key renames or omissions that would break the wire
+/// contract with the daemon.
 /// </summary>
 public class CreateTableWireShapeTests
 {
-    [Fact]
-    public void Static_Default_Matrix_Preserves_JSON_Scalars()
-    {
-        object?[] values = ["text", 3, true, null, "now"];
-        foreach (object? value in values)
-        {
-            string json = JsonSerializer.Serialize(new Dictionary<string, object?> { ["default_value"] = value });
-            using JsonDocument doc = JsonDocument.Parse(json);
-            Assert.Equal(JsonSerializer.Serialize(value), doc.RootElement.GetProperty("default_value").GetRawText());
-        }
-    }
     // CapturingHandler subclasses HttpMessageHandler to intercept the outgoing
     // HttpRequestMessage. The real HTTP transport is never touched; the base URL
     // points at an unreachable port but no request is actually dispatched.
@@ -37,6 +26,15 @@ public class CreateTableWireShapeTests
         public HttpRequestMessage? CapturedRequest { get; private set; }
         public string? CapturedBody { get; private set; }
         public Uri? CapturedUri { get; private set; }
+
+        private string _responseBody = "{\"table_id\":7}";
+        private string _responseContentType = "application/json";
+
+        public void SetResponse(string body, string contentType = "application/json")
+        {
+            _responseBody = body;
+            _responseContentType = contentType;
+        }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -47,9 +45,13 @@ public class CreateTableWireShapeTests
                 byte[] bytes = await request.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
                 CapturedBody = Encoding.UTF8.GetString(bytes);
             }
+            else
+            {
+                CapturedBody = null;
+            }
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("{\"table_id\":7}", Encoding.UTF8, "application/json"),
+                Content = new StringContent(_responseBody, Encoding.UTF8, _responseContentType),
             };
         }
     }
@@ -81,6 +83,56 @@ public class CreateTableWireShapeTests
         Assert.Equal("/kit/create_table", handler.CapturedUri!.AbsolutePath);
         Assert.NotNull(handler.CapturedRequest.Content);
         Assert.Equal("application/json", handler.CapturedRequest.Content!.Headers.ContentType!.MediaType);
+    }
+
+    [Fact]
+    public void Static_Default_Matrix_Preserves_JSON_Scalars_In_One_Payload()
+    {
+        string body = RunCreateTable(new List<Dictionary<string, object?>>
+        {
+            new() { ["id"] = 1, ["name"] = "id", ["ty"] = "int64", ["primary_key"] = true, ["nullable"] = false },
+            new() { ["id"] = 2, ["name"] = "string_default", ["ty"] = "varchar", ["nullable"] = false, ["default_value"] = "draft" },
+            new() { ["id"] = 3, ["name"] = "number_default", ["ty"] = "int64", ["nullable"] = false, ["default_value"] = 7 },
+            new() { ["id"] = 4, ["name"] = "bool_default", ["ty"] = "bool", ["nullable"] = false, ["default_value"] = true },
+            new() { ["id"] = 5, ["name"] = "null_default", ["ty"] = "varchar", ["nullable"] = false, ["default_value"] = null },
+            new() { ["id"] = 6, ["name"] = "now_literal", ["ty"] = "varchar", ["nullable"] = false, ["default_value"] = "now" },
+            new() { ["id"] = 7, ["name"] = "now_expr", ["ty"] = "timestamp_nanos", ["nullable"] = false, ["default_expr"] = "now" },
+        }, out _);
+
+        Assert.False(string.IsNullOrEmpty(body));
+        using JsonDocument doc = JsonDocument.Parse(body);
+
+        JsonElement Column(string name) => doc.RootElement.GetProperty("columns")
+            .EnumerateArray()
+            .First(c => c.GetProperty("name").GetString() == name);
+
+        // String literal: must round-trip as a JSON string, not an expression.
+        JsonElement stringCol = Column("string_default");
+        Assert.Equal(JsonValueKind.String, stringCol.GetProperty("default_value").ValueKind);
+        Assert.Equal("draft", stringCol.GetProperty("default_value").GetString());
+
+        // Number literal: must stay a JSON number.
+        JsonElement numberCol = Column("number_default");
+        Assert.Equal(JsonValueKind.Number, numberCol.GetProperty("default_value").ValueKind);
+        Assert.Equal(7, numberCol.GetProperty("default_value").GetInt32());
+
+        // Boolean literal: must stay a JSON true.
+        JsonElement boolCol = Column("bool_default");
+        Assert.Equal(JsonValueKind.True, boolCol.GetProperty("default_value").ValueKind);
+
+        // Explicit null: must serialize as JSON null.
+        JsonElement nullCol = Column("null_default");
+        Assert.Equal(JsonValueKind.Null, nullCol.GetProperty("default_value").ValueKind);
+
+        // Literal "now" in default_value is still just a string; it is NOT dynamic.
+        JsonElement nowLiteralCol = Column("now_literal");
+        Assert.Equal(JsonValueKind.String, nowLiteralCol.GetProperty("default_value").ValueKind);
+        Assert.Equal("now", nowLiteralCol.GetProperty("default_value").GetString());
+
+        // Dynamic default lives in default_expr and must not also emit default_value.
+        JsonElement nowExprCol = Column("now_expr");
+        Assert.False(nowExprCol.TryGetProperty("default_value", out _), "default_expr column must not also send default_value");
+        Assert.Equal("now", nowExprCol.GetProperty("default_expr").GetString());
     }
 
     [Fact]
@@ -152,5 +204,36 @@ public class CreateTableWireShapeTests
         // (no accidental `null` literals that the engine would later reject).
         Assert.False(nameCol.TryGetProperty("enum_variants", out _), "enum_variants must be absent when not set");
         Assert.False(nameCol.TryGetProperty("default_value", out _), "default_value must be absent when not set");
+    }
+
+    [Fact]
+    public void SetHistoryRetentionEpochs_Puts_To_HistoryRetention_With_Exact_Body()
+    {
+        var handler = new CapturingHandler();
+        handler.SetResponse("{\"history_retention_epochs\":100,\"earliest_retained_epoch\":1}");
+        using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        var client = new MongrelDBClient(null, token: null, username: null, password: null, http);
+        HistoryRetention retention = client.SetHistoryRetentionEpochsAsync(100).GetAwaiter().GetResult();
+
+        Assert.Equal(100UL, retention.HistoryRetentionEpochs);
+        Assert.NotNull(handler.CapturedRequest);
+        Assert.Equal(HttpMethod.Put, handler.CapturedRequest!.Method);
+        Assert.NotNull(handler.CapturedUri);
+        Assert.Equal("/history/retention", handler.CapturedUri!.AbsolutePath);
+        Assert.Equal("{\"history_retention_epochs\":100}", handler.CapturedBody);
+    }
+
+    [Fact]
+    public void GetHistoryRetentionAsync_Decodes_Response_Fields()
+    {
+        var handler = new CapturingHandler();
+        handler.SetResponse("{\"history_retention_epochs\":100,\"earliest_retained_epoch\":42}");
+        using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        var client = new MongrelDBClient(null, token: null, username: null, password: null, http);
+
+        HistoryRetention retention = client.GetHistoryRetentionAsync().GetAwaiter().GetResult();
+
+        Assert.Equal(100UL, retention.HistoryRetentionEpochs);
+        Assert.Equal(42UL, retention.EarliestRetainedEpoch);
     }
 }

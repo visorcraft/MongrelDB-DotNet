@@ -154,7 +154,7 @@ recognised on top of `id`, `name`, `ty`, `primary_key`, `nullable`:
 | Key | Type | Effect |
 |-----|------|--------|
 | `enum_variants` | `string[]` | Required when `ty` is `"enum"`. Ordered list of allowed values. |
-| `default_value` | JSON scalar | Static per-column default, preserving string/number/bool type. |
+| `default_value` | JSON scalar | Static per-column default, preserving string/number/bool/null type. |
 | `default_expr` | `string` | Dynamic default: `"now"` or `"uuid"`. |
 
 Both arrive on the wire verbatim - the codec does not rename or strip them.
@@ -175,12 +175,34 @@ await db.CreateTableAsync("users", new[]
         ["enum_variants"] = new[] { "admin", "user", "guest" },
         ["default_value"] = "guest",
     },
-    // Timestamp column that fills in "now" on insert.
+    // Integer column with a static numeric default.
     new Dictionary<string, object?>
     {
-        ["id"] = 3L, ["name"] = "created_at", ["ty"] = "timestamp_nanos",
+        ["id"] = 3L, ["name"] = "score", ["ty"] = "int64",
         ["primary_key"] = false, ["nullable"] = false,
-        ["default_value"] = "now",
+        ["default_value"] = 7,
+    },
+    // Boolean column with a static true default.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 4L, ["name"] = "active", ["ty"] = "bool",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["default_value"] = true,
+    },
+    // Nullable column with an explicit null default.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 5L, ["name"] = "optional", ["ty"] = "varchar",
+        ["primary_key"] = false, ["nullable"] = true,
+        ["default_value"] = null,
+    },
+    // Timestamp column that fills in "now" on insert.
+    // This is a dynamic default, so it uses default_expr, not default_value.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 6L, ["name"] = "created_at", ["ty"] = "timestamp_nanos",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["default_expr"] = "now",
     },
 });
 ```
@@ -251,6 +273,22 @@ success is the signal; use the native query builder for typed row retrieval.
 `--auth-token` or `--auth-users`, every call throws `AuthException` unless
 you construct the client with a token or Basic credentials. See
 [auth.md](auth.md).
+
+## 7. History retention
+
+Administrators can inspect and adjust how many committed epochs the engine
+retains for historical (`AS OF EPOCH`) reads. The daemon defaults to 1024
+retained epochs.
+
+```csharp
+HistoryRetention current = await db.GetHistoryRetentionAsync();
+await db.SetHistoryRetentionEpochsAsync(1000);
+```
+
+Both methods return a `HistoryRetention` record with `HistoryRetentionEpochs`
+and `EarliestRetainedEpoch`. The routes require `ADMIN` permission when catalog
+authentication is enabled. Increasing the retention window **cannot restore
+history that was already pruned**.
 
 ## Next steps
 

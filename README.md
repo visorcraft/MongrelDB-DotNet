@@ -43,9 +43,6 @@ Install-Package Visorcraft.MongrelDB
 
 The package has no runtime dependencies - only the .NET base class library.
 
-History retention: `GetHistoryRetentionAsync` and
-`SetHistoryRetentionEpochsAsync`.
-
 ## Requirements
 
 - **.NET 8.0 or newer**
@@ -127,9 +124,9 @@ await db.SqlAsync("UPDATE orders SET amount = 200.0 WHERE customer = 'Bob'");
 
 `CreateTableAsync` forwards every column-spec key the caller puts in the
 `Dictionary` to the daemon's `/kit/create_table` endpoint. The engine
-recognises `enum_variants` (required for `ty: "enum"`), scalar `default_value`,
-dynamic `default_expr` (`"now"` or `"uuid"`),
-top-level `constraints` block (unique / foreign-key / check).
+recognises `enum_variants` (required for `ty: "enum"`), scalar `default_value`
+(string, number, boolean, or null), dynamic `default_expr` (`"now"` or
+`"uuid"`), top-level `constraints` block (unique / foreign-key / check).
 
 ```csharp
 await db.CreateTableAsync("orders", new[]
@@ -147,12 +144,34 @@ await db.CreateTableAsync("orders", new[]
         ["enum_variants"] = new[] { "draft", "active", "archived" },
         ["default_value"] = "draft",
     },
-    // Timestamp column: engine fills "now" when the cell is omitted.
+    // Integer column with a static numeric default.
     new Dictionary<string, object?>
     {
-        ["id"] = 3L, ["name"] = "created_at", ["ty"] = "timestamp_nanos",
+        ["id"] = 3L, ["name"] = "score", ["ty"] = "int64",
         ["primary_key"] = false, ["nullable"] = false,
-        ["default_value"] = "now",
+        ["default_value"] = 7,
+    },
+    // Boolean column with a static true default.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 4L, ["name"] = "active", ["ty"] = "bool",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["default_value"] = true,
+    },
+    // Nullable column with an explicit null default.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 5L, ["name"] = "optional", ["ty"] = "varchar",
+        ["primary_key"] = false, ["nullable"] = true,
+        ["default_value"] = null,
+    },
+    // Timestamp column: engine fills "now" when the cell is omitted.
+    // This is a dynamic default, so it uses default_expr, not default_value.
+    new Dictionary<string, object?>
+    {
+        ["id"] = 6L, ["name"] = "created_at", ["ty"] = "timestamp_nanos",
+        ["primary_key"] = false, ["nullable"] = false,
+        ["default_expr"] = "now",
     },
 });
 ```
@@ -313,6 +332,22 @@ await db.SqlAsync("SELECT username FROM catalog.users"); // list users
 await db.SqlAsync("SELECT name FROM catalog.roles");     // list roles
 ```
 
+## History retention
+
+Administrators can inspect and adjust how many committed epochs the engine
+retains for historical (`AS OF EPOCH`) reads. The daemon defaults to 1024
+retained epochs.
+
+```csharp
+HistoryRetention current = await db.GetHistoryRetentionAsync();
+await db.SetHistoryRetentionEpochsAsync(1000);
+```
+
+Both methods return a `HistoryRetention` record with `HistoryRetentionEpochs`
+and `EarliestRetainedEpoch`. The routes require `ADMIN` permission when catalog
+authentication is enabled. Increasing the retention window **cannot restore
+history that was already pruned**.
+
 ## Error handling
 
 Every non-2xx response is mapped to a typed exception. Catch the specific
@@ -381,6 +416,8 @@ requests cooperatively.
 | `GetSchemaForAsync(table)` | Single-table descriptor |
 | `CompactAsync()` | Compact all tables |
 | `CompactTableAsync(table)` | Compact one table |
+| `GetHistoryRetentionAsync()` | Read the retained epoch window |
+| `SetHistoryRetentionEpochsAsync(epochs)` | Set the retained epoch window (requires admin) |
 | `BeginTransaction()` | Start a batch |
 
 ### `QueryBuilder`
