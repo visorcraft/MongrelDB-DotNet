@@ -25,15 +25,15 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore tests/MongrelDB.Tests/MongrelDB.Tests.csproj
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build tests/MongrelDB.Tests/MongrelDB.Tests.csproj --configuration Release --no-restore
 
       - name: Offline tests (no daemon)
         # Runs the suite without a daemon; the live tests self-skip and the
         # offline tests (health-when-unreachable, auth header) run normally.
-        run: dotnet test --configuration Release --no-build --logger "console;verbosity=normal"
+        run: dotnet test tests/MongrelDB.Tests/MongrelDB.Tests.csproj --configuration Release --no-build --logger "console;verbosity=normal"
 
   live:
     # Boots a real mongreldb-server and runs the live round-trip suite.
@@ -52,10 +52,10 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore tests/MongrelDB.Tests/MongrelDB.Tests.csproj
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build tests/MongrelDB.Tests/MongrelDB.Tests.csproj --configuration Release --no-restore
 
       - name: Cache mongreldb-server binary
         id: server-cache
@@ -89,7 +89,7 @@ jobs:
           curl -sf http://127.0.0.1:8453/health >/dev/null || (cat /tmp/mongreldb-server.log && exit 1)
 
       - name: Run live tests
-        run: dotnet test --configuration Release --no-build --logger "console;verbosity=normal"
+        run: dotnet test tests/MongrelDB.Tests/MongrelDB.Tests.csproj --configuration Release --no-build --logger "console;verbosity=normal"
 
       # Each example is a top-level-statements Program.cs; compile and run each
       # in its own throwaway console project that references the client.
@@ -148,6 +148,7 @@ jobs:
 
           curl -fsSL -o /tmp/kit.tar.gz \
             "https://github.com/visorcraft/MongrelDB/releases/download/v${SERVER_VERSION}/mongreldb-kit-native-linux-x64-gnu.tar.gz"
+          mkdir -p /tmp/kit
           tar xzf /tmp/kit.tar.gz -C /tmp/kit --strip-components=1
           cp /tmp/kit/lib/libmongreldb_kit.so runtimes/linux-x64/native/
 
