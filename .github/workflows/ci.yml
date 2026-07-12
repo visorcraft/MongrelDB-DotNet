@@ -98,6 +98,12 @@ jobs:
           mkdir -p /tmp/ex-runner && cd /tmp/ex-runner
           for f in "$GITHUB_WORKSPACE"/examples/*.cs; do
             name=$(basename "$f" .cs)
+            # Skip examples that need the native embedded engine; they are
+            # exercised in the native job where libmongreldb*.so are present.
+            if grep -q 'Visorcraft\.MongrelDB\.Native' "$f"; then
+              echo "=== Skipping $name (requires native libs) ==="
+              continue
+            fi
             echo "=== Running $name ==="
             rm -rf "$name"
             mkdir -p "$name" && cd "$name"
@@ -153,7 +159,7 @@ jobs:
           cp /tmp/kit/lib/libmongreldb_kit.so runtimes/linux-x64/native/
 
       - name: Build
-        run: dotnet build MongrelDB.Native.csproj --configuration Release
+        run: dotnet build tests/MongrelDB.Native.Tests/MongrelDB.Native.Tests.csproj --configuration Release
 
       - name: Run native tests
         run: dotnet test tests/MongrelDB.Native.Tests/MongrelDB.Native.Tests.csproj --configuration Release --no-build --logger "console;verbosity=normal"
