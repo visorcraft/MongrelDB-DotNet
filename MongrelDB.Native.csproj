@@ -59,9 +59,9 @@
        get them automatically. -->
   <ItemGroup>
     <!-- LICENSE doesn't exist; only LICENSE-MIT / LICENSE-APACHE do. Pack both. -->
-    <None Include="..\LICENSE-MIT" Pack="true" PackagePath="\" />
-    <None Include="..\LICENSE-APACHE" Pack="true" PackagePath="\" />
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE-MIT" Pack="true" PackagePath="\" />
+    <None Include="LICENSE-APACHE" Pack="true" PackagePath="\" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="build\**\*" Pack="true" PackagePath="build\" />
     <None Include="runtimes\**\*" Pack="true" PackagePath="runtimes\" />
   </ItemGroup>
