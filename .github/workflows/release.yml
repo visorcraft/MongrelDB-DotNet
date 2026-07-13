@@ -20,6 +20,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: Engine release version, for example 0.52.2
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -31,7 +36,7 @@ jobs:
     environment: nuget
     env:
       # Engine release version to pull native libraries from. Matches the tag.
-      ENGINE_VERSION: ${{ github.ref_name }}
+      ENGINE_VERSION: ${{ inputs.version || github.ref_name }}
     steps:
       - uses: actions/checkout@v5
 
@@ -54,11 +59,14 @@ jobs:
           # Map each engine platform target to the .NET RID it lands under.
           # runtimes/<rid>/native/ is the standard layout the .NET loader probes.
           download() {
-            local rid="$1" os="$2" arch="$3" fmt="$4" kitprefix="$5"
+            local rid="$1" os="$2" arch="$3" fmt="$4"
             local core_archive kit_archive
-            if [ "$fmt" = "tar.gz" ]; then
+            if [ "$os" = "linux" ]; then
               core_archive="mongreldb-native-${os}-${arch}-gnu.tar.gz"
               kit_archive="mongreldb-kit-native-${os}-${arch}-gnu.tar.gz"
+            elif [ "$fmt" = "tar.gz" ]; then
+              core_archive="mongreldb-native-${os}-${arch}.tar.gz"
+              kit_archive="mongreldb-kit-native-${os}-${arch}.tar.gz"
             else
               core_archive="mongreldb-native-${os}-${arch}.zip"
               kit_archive="mongreldb-kit-native-${os}-${arch}.zip"
@@ -90,16 +98,17 @@ jobs:
             fi
             rm -rf /tmp/kit /tmp/kit-x
 
-            echo "  $rid:" && ls "runtimes/${rid}/native/" | sed 's/^/    /'
+            echo "  $rid:"
+            find "runtimes/${rid}/native/" -maxdepth 1 -type f -printf '    %f\n'
           }
 
-          # 6 platform targets (musl uses linux-x64 for .NET; glibc and musl
+          # 5 platform targets (musl uses linux-x64 for .NET; glibc and musl
           # consumers both probe linux-x64, and the glibc build is the safe one).
-          download linux-x64      linux x64      tar.gz core
-          download linux-arm64    linux arm64    tar.gz core
-          download osx-arm64      darwin arm64   tar.gz core
-          download osx-x64        darwin x64     tar.gz core
-          download win-x64        windows x64    zip    core
+          download linux-x64      linux x64      tar.gz
+          download linux-arm64    linux arm64    tar.gz
+          download osx-arm64      darwin arm64   tar.gz
+          download osx-x64        darwin x64     tar.gz
+          download win-x64        windows x64    zip
 
       - name: Verify native libraries landed
         run: |
