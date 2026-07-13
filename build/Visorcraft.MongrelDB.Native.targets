@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSBuild targets for Visorcraft.MongrelDB.Native.
+
+  Auto-imported by any project that references the Visorcraft.MongrelDB.Native
+  NuGet package (SDK-style projects auto-import build/<PackageId>.targets).
+  The native libraries ship under runtimes/<rid>/native/ inside the package;
+  the .NET runtime loader resolves them automatically at run time via the
+  standard RID-based probing path, so no action is needed for a normal
+  `dotnet run` / `dotnet publish` flow.
+
+  This targets file exists primarily to:
+    1. Document the native lib layout for MSBuild-aware tooling.
+    2. Provide a hook for consumers who need the libs at build time
+       (e.g. AOT compilers that must resolve DllImports statically). The
+       MONGRELDB_NATIVE_DIR property, if set, is surfaced as a native
+       library search directory.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Condition="'$(MONGRELDB_NATIVE_DIR)' != ''">
+    <NativeLibraryDirectories>$(MONGRELDB_NATIVE_DIR);$(NativeLibraryDirectories)</NativeLibraryDirectories>
+  </PropertyGroup>
+
+  <!-- Surface the package's native lib root so build-time tools can find it. -->
+  <PropertyGroup>
+    <MongrelDBNativePackageRoot>$(MSBuildThisFileDirectory)..\runtimes\</MongrelDBNativePackageRoot>
+  </PropertyGroup>
+
+</Project>

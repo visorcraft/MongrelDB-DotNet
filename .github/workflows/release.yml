@@ -1,0 +1,123 @@
+# Publishes Visorcraft.MongrelDB and Visorcraft.MongrelDB.Native to NuGet on a
+# `v*` tag push.
+#
+# The native package bundles libmongreldb + libmongreldb_kit for all 6 platform
+# targets under runtimes/<rid>/native/, downloaded from the matching engine
+# GitHub release. The .NET runtime loader resolves them automatically at run
+# time via standard RID-based probing — no build-time targets glue needed.
+#
+# Required secret (repo settings → Secrets and variables → Actions):
+#   NUGET_API_KEY  - nuget.org API key with push permission for Visorcraft.*
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      # Engine release version to pull native libraries from. Matches the tag.
+      ENGINE_VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      # Strip the leading 'v' from the tag for the download URL (v0.50.1 → 0.50.1).
+      - name: Resolve engine version
+        id: ver
+        run: echo "version=${ENGINE_VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download all native libraries
+        run: |
+          set -euo pipefail
+          VER="${{ steps.ver.outputs.version }}"
+          BASE="https://github.com/visorcraft/MongrelDB/releases/download/v${VER}"
+
+          # Map each engine platform target to the .NET RID it lands under.
+          # runtimes/<rid>/native/ is the standard layout the .NET loader probes.
+          download() {
+            local rid="$1" os="$2" arch="$3" fmt="$4" kitprefix="$5"
+            local core_archive kit_archive
+            if [ "$fmt" = "tar.gz" ]; then
+              core_archive="mongreldb-native-${os}-${arch}-gnu.tar.gz"
+              kit_archive="mongreldb-kit-native-${os}-${arch}-gnu.tar.gz"
+            else
+              core_archive="mongreldb-native-${os}-${arch}.zip"
+              kit_archive="mongreldb-kit-native-${os}-${arch}.zip"
+            fi
+
+            mkdir -p "runtimes/${rid}/native"
+
+            curl -fsSL -o /tmp/core "$BASE/$core_archive"
+            if [ "$fmt" = "tar.gz" ]; then
+              mkdir -p /tmp/core-x && tar xzf /tmp/core -C /tmp/core-x --strip-components=1
+              cp /tmp/core-x/lib/libmongreldb.* "runtimes/${rid}/native/" 2>/dev/null || true
+              cp /tmp/core-x/lib/*mongreldb.* "runtimes/${rid}/native/" 2>/dev/null || true
+            else
+              mkdir -p /tmp/core-x && unzip -o /tmp/core -d /tmp/core-x >/dev/null
+              cp /tmp/core-x/mongreldb-native/lib/mongreldb.* "runtimes/${rid}/native/" 2>/dev/null || true
+              cp /tmp/core-x/mongreldb-native/lib/*mongreldb.* "runtimes/${rid}/native/" 2>/dev/null || true
+            fi
+            rm -rf /tmp/core /tmp/core-x
+
+            curl -fsSL -o /tmp/kit "$BASE/$kit_archive"
+            if [ "$fmt" = "tar.gz" ]; then
+              mkdir -p /tmp/kit-x && tar xzf /tmp/kit -C /tmp/kit-x --strip-components=1
+              cp /tmp/kit-x/lib/libmongreldb_kit.* "runtimes/${rid}/native/" 2>/dev/null || true
+              cp /tmp/kit-x/lib/*mongreldb_kit.* "runtimes/${rid}/native/" 2>/dev/null || true
+            else
+              mkdir -p /tmp/kit-x && unzip -o /tmp/kit -d /tmp/kit-x >/dev/null
+              cp /tmp/kit-x/mongreldb-kit-native/lib/mongreldb_kit.* "runtimes/${rid}/native/" 2>/dev/null || true
+              cp /tmp/kit-x/mongreldb-kit-native/lib/*mongreldb_kit.* "runtimes/${rid}/native/" 2>/dev/null || true
+            fi
+            rm -rf /tmp/kit /tmp/kit-x
+
+            echo "  $rid:" && ls "runtimes/${rid}/native/" | sed 's/^/    /'
+          }
+
+          # 6 platform targets (musl uses linux-x64 for .NET; glibc and musl
+          # consumers both probe linux-x64, and the glibc build is the safe one).
+          download linux-x64      linux x64      tar.gz core
+          download linux-arm64    linux arm64    tar.gz core
+          download osx-arm64      darwin arm64   tar.gz core
+          download osx-x64        darwin x64     tar.gz core
+          download win-x64        windows x64    zip    core
+
+      - name: Verify native libraries landed
+        run: |
+          echo "=== runtimes/ tree ==="
+          find runtimes -type f | sort
+          total=$(find runtimes -type f | wc -l)
+          echo "Total native files: $total (expect ~10: 5 RIDs x 2 libs each)"
+
+      - name: Pack HTTP client (Visorcraft.MongrelDB)
+        run: dotnet pack MongrelDB.csproj -c Release -o dist
+
+      - name: Pack native package (Visorcraft.MongrelDB.Native)
+        run: dotnet pack MongrelDB.Native.csproj -c Release -o dist
+
+      - name: Push packages to NuGet
+        run: |
+          for pkg in dist/*.nupkg; do
+            echo "Pushing $(basename "$pkg")..."
+            dotnet nuget push "$pkg" --api-key "${{ secrets.NUGET_API_KEY }}" \
+              --source https://api.nuget.org/v3/index.json --skip-duplicate
+          done
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: dist/*.nupkg
