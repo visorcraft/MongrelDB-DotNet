@@ -24,9 +24,9 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin/Release/net8.0/MongrelDB.Native.dll" target="lib/net8.0" />
-    <file src="LICENSE-MIT" target="." />
-    <file src="LICENSE-APACHE" target="." />
-    <file src="README.md" target="." />
+    <file src="bin/Release/net8.0/MongrelDB.Native.dll" target="lib/net8.0/MongrelDB.Native.dll" />
+    <file src="LICENSE-MIT" target="LICENSE-MIT" />
+    <file src="LICENSE-APACHE" target="LICENSE-APACHE" />
+    <file src="README.md" target="README.md" />
   </files>
 </package>
