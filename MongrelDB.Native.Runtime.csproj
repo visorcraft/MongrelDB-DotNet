@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>Visorcraft.MongrelDB.Native.$(NativeRid)</PackageId>
+    <Title>MongrelDB native runtime for $(NativeRid)</Title>
+    <Description>MongrelDB native runtime libraries for $(NativeRid).</Description>
+    <Authors>Visorcraft</Authors>
+    <Owners>Visorcraft</Owners>
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/visorcraft/MongrelDB-DotNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/visorcraft/MongrelDB-DotNet.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>mongreldb;database;native;runtime;$(NativeRid)</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <Target Name="RequireNativeRid" BeforeTargets="Pack" Condition="'$(NativeRid)' == ''">
+    <Error Text="NativeRid is required" />
+  </Target>
+
+  <ItemGroup>
+    <None Include="LICENSE-MIT" Pack="true" PackagePath="\" />
+    <None Include="LICENSE-APACHE" Pack="true" PackagePath="\" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="runtimes\$(NativeRid)\native\*" Pack="true" PackagePath="runtimes\$(NativeRid)\native\" />
+  </ItemGroup>
+</Project>

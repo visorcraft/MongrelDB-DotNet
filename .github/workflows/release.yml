@@ -60,16 +60,22 @@ jobs:
           # runtimes/<rid>/native/ is the standard layout the .NET loader probes.
           download() {
             local rid="$1" os="$2" arch="$3" fmt="$4"
-            local core_archive kit_archive
+            local core_archive kit_archive core_lib kit_lib
             if [ "$os" = "linux" ]; then
               core_archive="mongreldb-native-${os}-${arch}-gnu.tar.gz"
               kit_archive="mongreldb-kit-native-${os}-${arch}-gnu.tar.gz"
+              core_lib="libmongreldb.so"
+              kit_lib="libmongreldb_kit.so"
             elif [ "$fmt" = "tar.gz" ]; then
               core_archive="mongreldb-native-${os}-${arch}.tar.gz"
               kit_archive="mongreldb-kit-native-${os}-${arch}.tar.gz"
+              core_lib="libmongreldb.dylib"
+              kit_lib="libmongreldb_kit.dylib"
             else
               core_archive="mongreldb-native-${os}-${arch}.zip"
               kit_archive="mongreldb-kit-native-${os}-${arch}.zip"
+              core_lib="mongreldb.dll"
+              kit_lib="mongreldb_kit.dll"
             fi
 
             mkdir -p "runtimes/${rid}/native"
@@ -77,24 +83,20 @@ jobs:
             curl -fsSL -o /tmp/core "$BASE/$core_archive"
             if [ "$fmt" = "tar.gz" ]; then
               mkdir -p /tmp/core-x && tar xzf /tmp/core -C /tmp/core-x --strip-components=1
-              cp /tmp/core-x/lib/libmongreldb.* "runtimes/${rid}/native/" 2>/dev/null || true
-              cp /tmp/core-x/lib/*mongreldb.* "runtimes/${rid}/native/" 2>/dev/null || true
+              cp "/tmp/core-x/lib/$core_lib" "runtimes/${rid}/native/"
             else
               mkdir -p /tmp/core-x && unzip -o /tmp/core -d /tmp/core-x >/dev/null
-              cp /tmp/core-x/mongreldb-native/lib/mongreldb.* "runtimes/${rid}/native/" 2>/dev/null || true
-              cp /tmp/core-x/mongreldb-native/lib/*mongreldb.* "runtimes/${rid}/native/" 2>/dev/null || true
+              cp "/tmp/core-x/mongreldb-native/lib/$core_lib" "runtimes/${rid}/native/"
             fi
             rm -rf /tmp/core /tmp/core-x
 
             curl -fsSL -o /tmp/kit "$BASE/$kit_archive"
             if [ "$fmt" = "tar.gz" ]; then
               mkdir -p /tmp/kit-x && tar xzf /tmp/kit -C /tmp/kit-x --strip-components=1
-              cp /tmp/kit-x/lib/libmongreldb_kit.* "runtimes/${rid}/native/" 2>/dev/null || true
-              cp /tmp/kit-x/lib/*mongreldb_kit.* "runtimes/${rid}/native/" 2>/dev/null || true
+              cp "/tmp/kit-x/lib/$kit_lib" "runtimes/${rid}/native/"
             else
               mkdir -p /tmp/kit-x && unzip -o /tmp/kit -d /tmp/kit-x >/dev/null
-              cp /tmp/kit-x/mongreldb-kit-native/lib/mongreldb_kit.* "runtimes/${rid}/native/" 2>/dev/null || true
-              cp /tmp/kit-x/mongreldb-kit-native/lib/*mongreldb_kit.* "runtimes/${rid}/native/" 2>/dev/null || true
+              cp "/tmp/kit-x/mongreldb-kit-native/lib/$kit_lib" "runtimes/${rid}/native/"
             fi
             rm -rf /tmp/kit /tmp/kit-x
 
@@ -121,7 +123,11 @@ jobs:
         run: dotnet pack MongrelDB.csproj -c Release -o dist
 
       - name: Pack native package (Visorcraft.MongrelDB.Native)
-        run: dotnet pack MongrelDB.Native.csproj -c Release -o dist
+        run: |
+          dotnet pack MongrelDB.Native.csproj -c Release -o dist
+          for rid in linux-x64 linux-arm64 osx-arm64 osx-x64 win-x64; do
+            dotnet pack MongrelDB.Native.Runtime.csproj -c Release -o dist -p:NativeRid="$rid"
+          done
 
       # NuGet Trusted Publishing (OIDC) — no long-lived API key.
       # Requires configuring a trusted-publishing policy on nuget.org that

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>Visorcraft.MongrelDB.Native</id>
+    <version>$version$</version>
+    <title>MongrelDB .NET Native (Embedded)</title>
+    <authors>Visorcraft</authors>
+    <owners>Visorcraft</owners>
+    <description>In-process native bindings for MongrelDB with runtime libraries for Linux, macOS, and Windows.</description>
+    <license type="expression">MIT OR Apache-2.0</license>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/visorcraft/MongrelDB-DotNet</projectUrl>
+    <repository type="git" url="https://github.com/visorcraft/MongrelDB-DotNet.git" />
+    <tags>mongreldb database native embedded pinvoke ffi visorcraft dotnet</tags>
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="Visorcraft.MongrelDB" version="[$version$]" />
+        <dependency id="Visorcraft.MongrelDB.Native.linux-x64" version="[$version$]" />
+        <dependency id="Visorcraft.MongrelDB.Native.linux-arm64" version="[$version$]" />
+        <dependency id="Visorcraft.MongrelDB.Native.osx-arm64" version="[$version$]" />
+        <dependency id="Visorcraft.MongrelDB.Native.osx-x64" version="[$version$]" />
+        <dependency id="Visorcraft.MongrelDB.Native.win-x64" version="[$version$]" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin/Release/net8.0/MongrelDB.Native.dll" target="lib/net8.0" />
+    <file src="LICENSE-MIT" target="" />
+    <file src="LICENSE-APACHE" target="" />
+    <file src="README.md" target="" />
+  </files>
+</package>

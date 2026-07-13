@@ -29,6 +29,8 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <NeutralLanguage>en</NeutralLanguage>
+    <NuspecFile>MongrelDB.Native.nuspec</NuspecFile>
+    <NuspecProperties>version=$(Version)</NuspecProperties>
 
     <!-- The native libraries live under runtimes/<rid>/native/ and are
          resolved by the .NET runtime loader automatically. -->
@@ -52,18 +54,6 @@
     <Compile Remove="src\Client\**\*" />
     <Compile Remove="tests\**\*" />
     <Compile Remove="examples\**\*" />
-  </ItemGroup>
-
-  <!-- Native libraries: the build/targets file (downloaded at build time by CI
-       into runtimes/<rid>/native/) ships in the NuGet package so consumers
-       get them automatically. -->
-  <ItemGroup>
-    <!-- LICENSE doesn't exist; only LICENSE-MIT / LICENSE-APACHE do. Pack both. -->
-    <None Include="LICENSE-MIT" Pack="true" PackagePath="\" />
-    <None Include="LICENSE-APACHE" Pack="true" PackagePath="\" />
-    <None Include="README.md" Pack="true" PackagePath="\" />
-    <None Include="build\**\*" Pack="true" PackagePath="build\" />
-    <None Include="runtimes\**\*" Pack="true" PackagePath="runtimes\" />
   </ItemGroup>
 
 </Project>
