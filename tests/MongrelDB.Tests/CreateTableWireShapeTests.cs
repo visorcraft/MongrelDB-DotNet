@@ -18,6 +18,15 @@ namespace MongrelDB.Tests;
 /// </summary>
 public class CreateTableWireShapeTests
 {
+    [Fact]
+    public void QueryBuilderIncludesOffset()
+    {
+        using var client = new MongrelDBClient("http://127.0.0.1:1");
+        Dictionary<string, object?> payload = client.Query("orders").Limit(10).Offset(12).Build();
+        Assert.Equal(10L, payload["limit"]);
+        Assert.Equal(12L, payload["offset"]);
+    }
+
     // CapturingHandler subclasses HttpMessageHandler to intercept the outgoing
     // HttpRequestMessage. The real HTTP transport is never touched; the base URL
     // points at an unreachable port but no request is actually dispatched.

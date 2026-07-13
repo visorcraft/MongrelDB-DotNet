@@ -440,6 +440,7 @@ requests cooperatively.
 | `Where(type, params)` | Add a native condition (AND-ed) |
 | `Projection(columnIDs)` | Set column projection |
 | `Limit(limit)` | Set row limit |
+| `Offset(offset)` | Skip matching rows before the limit |
 | `Build()` | Build the request payload |
 | `ExecuteAsync()` | Run the query |
 | `Truncated` | Whether the last `ExecuteAsync` result hit the limit |

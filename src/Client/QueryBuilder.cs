@@ -43,6 +43,7 @@ public sealed class QueryBuilder
     private readonly List<Dictionary<string, object?>> _conditions = new();
     private long[]? _projection;
     private long? _limit;
+    private long? _offset;
     private bool _lastTruncated;
 
     internal QueryBuilder(MongrelDBClient client, string table)
@@ -109,6 +110,13 @@ public sealed class QueryBuilder
         return this;
     }
 
+    /// <summary>Skips matching rows before applying the limit.</summary>
+    public QueryBuilder Offset(long offset)
+    {
+        _offset = offset;
+        return this;
+    }
+
     /// <summary>
     /// Builds the request payload that will be sent to <c>/kit/query</c>.
     /// </summary>
@@ -131,6 +139,10 @@ public sealed class QueryBuilder
         if (_limit is not null)
         {
             payload["limit"] = _limit.Value;
+        }
+        if (_offset is not null)
+        {
+            payload["offset"] = _offset.Value;
         }
         return payload;
     }
