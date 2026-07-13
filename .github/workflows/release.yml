@@ -6,8 +6,12 @@
 # GitHub release. The .NET runtime loader resolves them automatically at run
 # time via standard RID-based probing — no build-time targets glue needed.
 #
-# Required secret (repo settings → Secrets and variables → Actions):
-#   NUGET_API_KEY  - nuget.org API key with push permission for Visorcraft.*
+# Uses Trusted Publishing (OIDC) — no long-lived API key. Requires:
+#   1. Configure a trusted-publishing policy on nuget.org binding this repo
+#      (owner=visorcraft, repo=mongreldb-dotnet, workflow=release.yml,
+#      environment=nuget) to the Visorcraft.* package IDs. See:
+#      https://learn.microsoft.com/nuget/nuget-org/trusted-publishing
+#   2. Add NUGET_USER secret = your nuget.org username (used by NuGet/login).
 
 name: Release
 
@@ -19,10 +23,12 @@ on:
 
 permissions:
   contents: read
+  id-token: write # NuGet Trusted Publishing (OIDC)
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: nuget
     env:
       # Engine release version to pull native libraries from. Matches the tag.
       ENGINE_VERSION: ${{ github.ref_name }}
@@ -108,11 +114,26 @@ jobs:
       - name: Pack native package (Visorcraft.MongrelDB.Native)
         run: dotnet pack MongrelDB.Native.csproj -c Release -o dist
 
+      # NuGet Trusted Publishing (OIDC) — no long-lived API key.
+      # Requires configuring a trusted-publishing policy on nuget.org that
+      # binds this repo + workflow + environment. See:
+      # https://learn.microsoft.com/nuget/nuget-org/trusted-publishing
+      # The NuGet/login action exchanges the GitHub OIDC token for a
+      # short-lived API key scoped to the configured packages.
+      - name: Login to NuGet (OIDC)
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push packages to NuGet
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: |
           for pkg in dist/*.nupkg; do
             echo "Pushing $(basename "$pkg")..."
-            dotnet nuget push "$pkg" --api-key "${{ secrets.NUGET_API_KEY }}" \
+            dotnet nuget push "$pkg" \
+              --api-key "$NUGET_API_KEY" \
               --source https://api.nuget.org/v3/index.json --skip-duplicate
           done
 
