@@ -40,7 +40,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # Strip the leading 'v' from the tag for the download URL (v0.50.1 → 0.50.1).
+      # Strip the leading 'v' from the tag for the download URL (v0.52.2 → 0.52.2).
       - name: Resolve engine version
         id: ver
         run: echo "version=${ENGINE_VERSION#v}" >> "$GITHUB_OUTPUT"
