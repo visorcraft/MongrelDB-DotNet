@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Engine release version, for example 0.53.3
+        description: Engine release version, for example 0.55.0
         required: true
         type: string
 
@@ -45,7 +45,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # Strip the leading 'v' from the tag for the download URL (v0.53.3 → 0.53.3).
+      # Strip the leading 'v' from the tag for the download URL (v0.55.0 → 0.55.0).
       - name: Resolve engine version
         id: ver
         run: echo "version=${ENGINE_VERSION#v}" >> "$GITHUB_OUTPUT"
