@@ -685,13 +685,16 @@ public sealed class MongrelDBClient : IDisposable
 
     /// <summary>
     /// Flattens a column-id-to-value map to the server's flat
-    /// <c>[col_id, value, col_id, value, ...]</c> array. Pair order is not
-    /// significant - each value is preceded by its own column id.
+    /// <c>[col_id, value, col_id, value, ...]</c> array in ascending
+    /// column-id order. Stable ordering is required for idempotency keys:
+    /// the server hashes the request payload, and unordered dictionary
+    /// iteration would make two commits of the same cells look like a reuse
+    /// mismatch.
     /// </summary>
     internal static List<object?> FlattenCells(Cells cells)
     {
         var flat = new List<object?>(cells.Count * 2);
-        foreach (KeyValuePair<long, object?> entry in cells)
+        foreach (KeyValuePair<long, object?> entry in cells.OrderBy(static e => e.Key))
         {
             flat.Add(entry.Key);
             flat.Add(entry.Value);
