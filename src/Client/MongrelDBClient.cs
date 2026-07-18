@@ -408,6 +408,16 @@ public sealed class MongrelDBClient : IDisposable
         return new QueryBuilder(this, table);
     }
 
+    /// <summary>
+    /// Starts a fluent <see cref="SearchBuilder"/> against <paramref name="table"/>
+    /// (<c>POST /kit/search</c>).
+    /// </summary>
+    public SearchBuilder Search(string table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        return new SearchBuilder(this, table);
+    }
+
     // ── SQL ───────────────────────────────────────────────────────────────
 
     /// <summary>

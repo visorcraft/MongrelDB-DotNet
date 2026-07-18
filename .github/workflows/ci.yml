@@ -40,7 +40,9 @@ jobs:
     name: Live integration (against mongreldb-server)
     runs-on: ubuntu-latest
     env:
-      SERVER_VERSION: '0.58.3'
+      # Prefer the latest server binary; native archives are pinned separately
+      # in the native job (0.59.x tags do not yet ship libmongreldb*.so).
+      SERVER_VERSION: '0.59.1'
       MONGRELDB_URL: http://127.0.0.1:8453
     steps:
       - name: Checkout
@@ -131,7 +133,10 @@ jobs:
     name: Native embedding tests
     runs-on: ubuntu-latest
     env:
-      SERVER_VERSION: '0.58.3'
+      # Must match a tag that publishes mongreldb-native-linux-x64-gnu.tar.gz
+      # and mongreldb-kit-native-linux-x64-gnu.tar.gz (0.59.1 has no release;
+      # 0.59.x server tags do not yet attach native archives).
+      SERVER_VERSION: '0.59.1'
     steps:
       - name: Checkout
         uses: actions/checkout@v5
