@@ -43,6 +43,30 @@ internal static class MongrelDBInterop
 		[MarshalAs(UnmanagedType.LPUTF8Str)] string password);
 
 	[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+	public static extern IntPtr mongreldb_create_encrypted(
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string passphrase);
+
+	[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+	public static extern IntPtr mongreldb_open_encrypted(
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string passphrase);
+
+	[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+	public static extern IntPtr mongreldb_create_encrypted_with_credentials(
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string passphrase,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string user,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string password);
+
+	[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+	public static extern IntPtr mongreldb_open_encrypted_with_credentials(
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string passphrase,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string user,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string password);
+
+	[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
 	public static extern int mongreldb_database_close(IntPtr db);
 
 	[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -146,6 +170,21 @@ internal static class MongrelDBKitInterop
 	public static extern IntPtr mongreldb_kit_create_with_credentials(
 		[MarshalAs(UnmanagedType.LPUTF8Str)] string path,
 		[MarshalAs(UnmanagedType.LPUTF8Str)] string schemaJson,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string adminUser,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string adminPassword);
+
+	[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+	public static extern IntPtr mongreldb_kit_open_encrypted_with_credentials(
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string passphrase,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string user,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string password);
+
+	[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+	public static extern IntPtr mongreldb_kit_create_encrypted_with_credentials(
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string schemaJson,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string passphrase,
 		[MarshalAs(UnmanagedType.LPUTF8Str)] string adminUser,
 		[MarshalAs(UnmanagedType.LPUTF8Str)] string adminPassword);
 

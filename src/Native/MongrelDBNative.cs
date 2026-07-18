@@ -54,6 +54,84 @@ public sealed class MongrelDBNative : IDisposable
 	}
 
 	/// <summary>
+	/// Opens an AES-256-GCM encrypted Kit database with a passphrase.
+	/// </summary>
+	public static MongrelDBNative OpenEncrypted(string path, string passphrase)
+	{
+		NativeLibraryLoader.EnsureInitialized();
+		var handle = MongrelDBKitInterop.mongreldb_kit_open_encrypted(path, passphrase);
+		if (handle == IntPtr.Zero)
+			throw new QueryException(LastKitError(), -1, null, null);
+		return new MongrelDBNative(handle);
+	}
+
+	/// <summary>
+	/// Creates an AES-256-GCM encrypted Kit database with a passphrase.
+	/// </summary>
+	public static MongrelDBNative CreateEncrypted(string path, string schemaJson, string passphrase)
+	{
+		NativeLibraryLoader.EnsureInitialized();
+		var handle = MongrelDBKitInterop.mongreldb_kit_create_encrypted(path, schemaJson, passphrase);
+		if (handle == IntPtr.Zero)
+			throw new QueryException(LastKitError(), -1, null, null);
+		return new MongrelDBNative(handle);
+	}
+
+	/// <summary>
+	/// Opens a Kit database with storage-layer username/password credentials.
+	/// </summary>
+	public static MongrelDBNative OpenWithCredentials(string path, string username, string password)
+	{
+		NativeLibraryLoader.EnsureInitialized();
+		var handle = MongrelDBKitInterop.mongreldb_kit_open_with_credentials(path, username, password);
+		if (handle == IntPtr.Zero)
+			throw new QueryException(LastKitError(), -1, null, null);
+		return new MongrelDBNative(handle);
+	}
+
+	/// <summary>
+	/// Creates a credentialed Kit database (require_auth + admin user).
+	/// </summary>
+	public static MongrelDBNative CreateWithCredentials(
+		string path, string schemaJson, string adminUsername, string adminPassword)
+	{
+		NativeLibraryLoader.EnsureInitialized();
+		var handle = MongrelDBKitInterop.mongreldb_kit_create_with_credentials(
+			path, schemaJson, adminUsername, adminPassword);
+		if (handle == IntPtr.Zero)
+			throw new QueryException(LastKitError(), -1, null, null);
+		return new MongrelDBNative(handle);
+	}
+
+	/// <summary>
+	/// Opens an encrypted Kit database that also requires username/password credentials.
+	/// </summary>
+	public static MongrelDBNative OpenEncryptedWithCredentials(
+		string path, string passphrase, string username, string password)
+	{
+		NativeLibraryLoader.EnsureInitialized();
+		var handle = MongrelDBKitInterop.mongreldb_kit_open_encrypted_with_credentials(
+			path, passphrase, username, password);
+		if (handle == IntPtr.Zero)
+			throw new QueryException(LastKitError(), -1, null, null);
+		return new MongrelDBNative(handle);
+	}
+
+	/// <summary>
+	/// Creates an encrypted Kit database with passphrase + admin credentials.
+	/// </summary>
+	public static MongrelDBNative CreateEncryptedWithCredentials(
+		string path, string schemaJson, string passphrase, string adminUsername, string adminPassword)
+	{
+		NativeLibraryLoader.EnsureInitialized();
+		var handle = MongrelDBKitInterop.mongreldb_kit_create_encrypted_with_credentials(
+			path, schemaJson, passphrase, adminUsername, adminPassword);
+		if (handle == IntPtr.Zero)
+			throw new QueryException(LastKitError(), -1, null, null);
+		return new MongrelDBNative(handle);
+	}
+
+	/// <summary>
 	/// Internal constructor from an existing handle.
 	/// </summary>
 	private MongrelDBNative(IntPtr handle)
