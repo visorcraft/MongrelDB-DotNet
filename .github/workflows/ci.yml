@@ -134,8 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Must match a tag that publishes mongreldb-native-linux-x64-gnu.tar.gz
-      # and mongreldb-kit-native-linux-x64-gnu.tar.gz (0.60.3 has no release;
-      # 0.59.x server tags do not yet attach native archives).
+      # and mongreldb-kit-native-linux-x64-gnu.tar.gz.
       SERVER_VERSION: '0.60.3'
     steps:
       - name: Checkout
