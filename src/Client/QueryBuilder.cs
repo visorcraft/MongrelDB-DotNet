@@ -216,6 +216,10 @@ public sealed class QueryBuilder
     ///       NOT apply globally)</item>
     /// </list>
     /// </remarks>
+    /// <summary>Shared with <see cref="SearchBuilder"/> for condition aliases.</summary>
+    internal static Dictionary<string, object?> NormalizeConditionPublic(string condType, IDictionary<string, object?> @params)
+        => NormalizeCondition(condType, @params);
+
     private static Dictionary<string, object?> NormalizeCondition(string condType, IDictionary<string, object?> @params)
     {
         var normalized = new Dictionary<string, object?>(@params.Count, StringComparer.Ordinal);
