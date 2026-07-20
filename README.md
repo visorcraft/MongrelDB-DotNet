@@ -32,7 +32,7 @@ dotnet add package Visorcraft.MongrelDB
 ### PackageReference
 
 ```xml
-<PackageReference Include="Visorcraft.MongrelDB" Version="0.60.3" />
+<PackageReference Include="Visorcraft.MongrelDB" Version="0.61.1" />
 ```
 
 ### Package Manager
@@ -495,7 +495,7 @@ Fetch a prebuilt server binary from the [MongrelDB releases](https://github.com/
 ```sh
 mkdir -p bin
 curl -fsSL -o bin/mongreldb-server \
-  https://github.com/visorcraft/MongrelDB/releases/download/v0.60.3/mongreldb-server-linux-x64
+  https://github.com/visorcraft/MongrelDB/releases/download/v0.61.1/mongreldb-server-linux-x64
 chmod +x bin/mongreldb-server
 ```
 

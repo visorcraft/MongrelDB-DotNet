@@ -42,7 +42,7 @@ jobs:
     env:
       # Prefer the latest server binary; native archives are pinned separately
       # in the native job (0.59.x tags do not yet ship libmongreldb*.so).
-      SERVER_VERSION: '0.60.3'
+      SERVER_VERSION: '0.61.1'
       MONGRELDB_URL: http://127.0.0.1:8453
     steps:
       - name: Checkout
@@ -135,7 +135,7 @@ jobs:
     env:
       # Must match a tag that publishes mongreldb-native-linux-x64-gnu.tar.gz
       # and mongreldb-kit-native-linux-x64-gnu.tar.gz.
-      SERVER_VERSION: '0.60.3'
+      SERVER_VERSION: '0.61.1'
     steps:
       - name: Checkout
         uses: actions/checkout@v5
