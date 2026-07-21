@@ -237,6 +237,75 @@ public class CreateTableWireShapeTests
     }
 
     [Fact]
+    public void AnnWithOptions_ReachWire()
+    {
+        // Build an ANN index against an embedding column using DiskANN as the
+        // swappable backend. The on-wire JSON must carry the algorithm selector,
+        // quantization mode, and the diskann-specific hyperparameters verbatim
+        // so the daemon's ANN-backend dispatcher can read them.
+        var diskannOptions = new Dictionary<string, object?>
+        {
+            ["r"] = 128L,
+            ["l"] = 256L,
+            ["beam_width"] = 8L,
+            ["alpha"] = 1.2,
+        };
+        var annOptions = new Dictionary<string, object?>
+        {
+            ["algorithm"] = "diskann",
+            ["quantization"] = "dense",
+            ["diskann"] = diskannOptions,
+        };
+        var index = new Dictionary<string, object?>
+        {
+            ["name"] = "ann",
+            ["column_id"] = 2L,
+            ["kind"] = "ann",
+            ["predicate"] = "embedding IS NOT NULL",
+            ["options"] = new Dictionary<string, object?> { ["ann"] = annOptions },
+        };
+        var columns = new List<Dictionary<string, object?>>
+        {
+            new() { ["id"] = 1L, ["name"] = "id", ["ty"] = "int64", ["primary_key"] = true, ["nullable"] = false },
+            new() { ["id"] = 2L, ["name"] = "embedding", ["ty"] = "embedding(384)", ["nullable"] = false },
+        };
+        var indexes = new List<Dictionary<string, object?>> { index };
+
+        var handler = new CapturingHandler();
+        using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        var client = new MongrelDBClient(null, token: null, username: null, password: null, http);
+        long tableId = client.CreateTableAsync("vectors", columns, null, indexes).GetAwaiter().GetResult();
+        Assert.Equal(7L, tableId);
+
+        string body = handler.CapturedBody ?? string.Empty;
+        Assert.False(string.IsNullOrEmpty(body));
+
+        // Parsed shape: the index reaches the wire as part of "indexes", with the
+        // algorithm, quantization, and diskann sub-object all surviving intact.
+        using JsonDocument doc = JsonDocument.Parse(body);
+        JsonElement wireIndex = doc.RootElement.GetProperty("indexes")
+            .EnumerateArray()
+            .First(i => i.GetProperty("kind").GetString() == "ann");
+        Assert.Equal("embedding IS NOT NULL", wireIndex.GetProperty("predicate").GetString());
+
+        JsonElement ann = wireIndex.GetProperty("options").GetProperty("ann");
+        Assert.Equal("diskann", ann.GetProperty("algorithm").GetString());
+        Assert.Equal("dense", ann.GetProperty("quantization").GetString());
+
+        JsonElement diskann = ann.GetProperty("diskann");
+        Assert.Equal(128L, diskann.GetProperty("r").GetInt64());
+        Assert.Equal(256L, diskann.GetProperty("l").GetInt64());
+        Assert.Equal(8L, diskann.GetProperty("beam_width").GetInt64());
+        Assert.Equal(1.2, diskann.GetProperty("alpha").GetDouble());
+
+        // Raw substring checks pin the exact on-wire markers the engine keys off,
+        // including the diskann options block opening with its first hyperparameter.
+        Assert.Contains("\"algorithm\":\"diskann\"", body);
+        Assert.Contains("\"diskann\":{\"r\":128", body);
+        Assert.Contains("\"quantization\":\"dense\"", body);
+    }
+
+    [Fact]
     public void SetHistoryRetentionEpochs_Puts_To_HistoryRetention_With_Exact_Body()
     {
         var handler = new CapturingHandler();
