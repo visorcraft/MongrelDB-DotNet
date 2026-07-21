@@ -414,7 +414,7 @@ requests cooperatively.
 | `new MongrelDBClient(baseUrl, token, user, pass, http)` | With a custom `HttpClient` |
 | `HealthAsync()` | Check daemon health (returns `false` rather than throwing when unreachable) |
 | `GetTableNamesAsync()` | List table names |
-| `CreateTableAsync(name, columns, constraints?)` | Create a table; returns the table id and forwards optional native constraints |
+| `CreateTableAsync(name, columns, constraints?, indexes?)` | Create a table with optional constraints and all index definitions |
 | `DropTableAsync(name)` | Drop a table |
 | `CountAsync(table)` | Row count |
 | `PutAsync(table, cells, key?)` | Insert a row |
