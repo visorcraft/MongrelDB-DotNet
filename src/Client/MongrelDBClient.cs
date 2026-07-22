@@ -427,6 +427,87 @@ public sealed class MongrelDBClient : IDisposable
         return new SearchBuilder(this, table);
     }
 
+    // ── Durable recovery & retrieve_text (0.64+) ──────────────────────────
+
+    /// <summary>
+    /// Fetches retained SQL execution status for durable recovery
+    /// (<c>GET /queries/{query_id}</c>).
+    /// </summary>
+    public async Task<QueryStatus> QueryStatusAsync(string queryId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(queryId))
+        {
+            throw new ArgumentException("query_id is required", nameof(queryId));
+        }
+        byte[] body = await GetAsync("/queries/" + UrlPathEscape(queryId), cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return QueryStatus.ParseJson(body);
+        }
+        catch (JsonException ex)
+        {
+            throw new QueryException($"mongreldb: decode query status: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Requests cancellation of a running SQL query
+    /// (<c>POST /queries/{query_id}/cancel</c>).
+    /// </summary>
+    public async Task<Dictionary<string, object?>> CancelQueryAsync(string queryId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(queryId))
+        {
+            throw new ArgumentException("query_id is required", nameof(queryId));
+        }
+        byte[] body = await PostAsync(
+            "/queries/" + UrlPathEscape(queryId) + "/cancel",
+            new Dictionary<string, object?>(),
+            cancellationToken).ConfigureAwait(false);
+        if (body.Length == 0)
+        {
+            return new Dictionary<string, object?>();
+        }
+        using JsonDocument doc = JsonDocument.Parse(body);
+        return doc.RootElement.ValueKind == JsonValueKind.Object
+            ? ReadObject(doc.RootElement)
+            : new Dictionary<string, object?>();
+    }
+
+    /// <summary>
+    /// Embeds <paramref name="text"/> under the active semantic identity for
+    /// <paramref name="embeddingColumn"/> and runs ANN retrieval
+    /// (<c>POST /kit/retrieve_text</c>).
+    /// </summary>
+    public async Task<Dictionary<string, object?>> RetrieveTextAsync(
+        string table,
+        int embeddingColumn,
+        string text,
+        RetrieveTextOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        Dictionary<string, object?> payload = RetrieveText.BuildRequest(table, embeddingColumn, text, options);
+        byte[] body = await PostAsync("/kit/retrieve_text", payload, cancellationToken).ConfigureAwait(false);
+        if (body.Length == 0)
+        {
+            return new Dictionary<string, object?>
+            {
+                ["hits"] = new List<object?>(),
+                ["provenance"] = new Dictionary<string, object?>(),
+            };
+        }
+        using JsonDocument doc = JsonDocument.Parse(body);
+        if (doc.RootElement.ValueKind == JsonValueKind.Object)
+        {
+            return ReadObject(doc.RootElement);
+        }
+        return new Dictionary<string, object?>
+        {
+            ["hits"] = new List<object?>(),
+            ["provenance"] = new Dictionary<string, object?>(),
+        };
+    }
+
     // ── SQL ───────────────────────────────────────────────────────────────
 
     /// <summary>
