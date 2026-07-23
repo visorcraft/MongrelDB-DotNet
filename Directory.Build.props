@@ -3,7 +3,7 @@
     <!-- Single source of truth for the package version. Both MongrelDB.csproj
          and MongrelDB.Native.csproj inherit this; overriding here avoids the
          .NET SDK default of 1.0.0 and keeps the two packages in lockstep. -->
-    <Version>0.64.4</Version>
+    <Version>0.64.5</Version>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
