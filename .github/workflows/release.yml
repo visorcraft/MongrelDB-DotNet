@@ -35,8 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: nuget
     env:
-      # Engine release version to pull native libraries from. Matches the tag.
-      ENGINE_VERSION: ${{ inputs.version || github.ref_name }}
+      # Native archives are published on the MongrelDB engine tag. That tag can
+      # differ from this client's package version (v0.67.0 tracks engine v0.66.2).
+      ENGINE_VERSION: ${{ inputs.version || 'v0.66.2' }}
     steps:
       - uses: actions/checkout@v5
 
