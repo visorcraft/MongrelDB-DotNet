@@ -36,7 +36,7 @@ jobs:
     environment: nuget
     env:
       # Native archives are published on the MongrelDB engine tag.
-      ENGINE_VERSION: ${{ inputs.version || 'v0.67.0' }}
+      ENGINE_VERSION: ${{ inputs.version || 'v0.67.1' }}
     steps:
       - uses: actions/checkout@v5
 
